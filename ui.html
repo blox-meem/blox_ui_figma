@@ -1,17 +1,361 @@
-<h2>Rectangle Creator</h2>
-<p>Count: <input id="count" type="number" value="5"></p>
-<button id="create">Create</button>
-<button id="cancel">Cancel</button>
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-document.getElementById('create').onclick = () => {
-  const textbox = document.getElementById('count');
-  const count = parseInt(textbox.value, 10);
-  parent.postMessage({ pluginMessage: { type: 'create-shapes', count } }, '*')
-}
+  <title>Blox F2R</title>
+  
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      background-color: rgba(0, 14, 85, 1);
+      user-select: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: bold;
+      flex-direction: column;
+    }
 
-document.getElementById('cancel').onclick = () => {
-  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
-}
+    #sign-up {
+      display: none;
+    }
 
-</script>
+    #header {
+      text-align: center; 
+      margin-top: 20px;
+      color: rgb(255, 255, 255);
+    }
+
+    #password-input-validation-notice {
+      color: rgb(255, 255, 255);
+      font-size: 15px;
+      text-align: center;
+      padding-bottom: 20px; 
+    }
+
+    #password-input {
+      fill: none;
+      text-decoration: none;
+      background: transparent;
+      border: 2px solid #ccc; 
+      border-radius: 20px; 
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      color: #ccc;
+      font-family: 'Inter', sans-serif;
+      font-weight: bold;
+      outline: none;
+    }
+
+    #password-input::placeholder {
+      color: #ccc;
+      font-family: 'Inter', sans-serif;
+      font-weight: bold;
+    }
+
+    #progress-text {
+      display: none;
+      padding-top: 20px;
+      color: #ccc;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    #main-interface {
+      display: none;
+    } 
+  
+    #main-header {
+      color: white; 
+      font-size: 25px;
+      padding-top: 20px; 
+      text-align: center;
+    }
+  
+    #main-selected-item {
+      color: white;
+      padding-top: 15px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    #main-convert-to {
+      text-align: center;
+      color: white;
+      font-size: 13px;
+      padding-top: 15px;
+    } 
+
+    #main-convert-buttons {
+      padding-top: 15px;
+      justify-content: space-between;
+    }
+
+    #main-convert-to-code-button #main-convert-to-object-button {
+      align-items: center;
+      align-content: center;
+      align-self: center;
+      color: white;
+      fill: none;
+      text-decoration: none;
+      background: transparent;
+      border: 2px solid #ccc; 
+      border-radius: 20px;
+      padding-right: 10px;
+      padding-left: 10px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      margin: 5px;
+    }
+
+    #converting-process {
+      display: none;
+      justify-content: center;
+    }
+ 
+    #progress-title {
+      padding-top: 30px;
+      color: white;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    #progress-bar-div {
+      padding-top: 15px;      
+    }
+
+    #download-button-div {
+      padding-top: 15px; 
+    }
+
+    #download-button {
+      align-self: center;
+      color: white;
+      fill: none;
+      text-decoration: none;
+      background: transparent;
+      border: 2px solid #ccc; 
+      border-radius: 20px;
+      padding-right: 10px;
+      padding-left: 10px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      text-align: center;
+      font-size: 13px;
+      justify-self: center;
+      align-content: center;
+      justify-content: center;
+      margin-left: 35px;
+    }
+
+    #back-to-main-div {
+      padding-top: 15px; 
+    }
+
+    #back-to-main-button {
+      align-self: center;
+      color: white;
+      fill: none;
+      text-decoration: none;
+      background: transparent;
+      border: 2px solid #ccc; 
+      border-radius: 20px;
+      padding-right: 10px;
+      padding-left: 10px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      text-align: center;
+      font-size: 13px;
+      justify-self: center;
+      align-content: center;
+      justify-content: center;
+      margin-left: 47.5px;
+    }
+  </style>
+
+</head>
+  <body>
+    <div id="sign-up">
+      <div id="column">
+
+        <!-- Header -->
+        <div id="header">
+          <h2 id="title">Blox F2R</h2>
+        </div>
+        
+        <!-- Password Input Validation Notice -->
+        <div id="password-input-validation-notice">
+          <div>Enter your provided password...</div>
+        </div>
+
+        <!-- Password Input Validation -->
+        <div>
+          <input
+            id="password-input" 
+            type="password"
+            placeholder="Enter password..."
+            font-family: 'Inter', sans-serif;
+            font-weight: bold;
+          >
+        </div>
+      </div>
+
+      <!-- Progress Text -->
+      <div>
+        <div id="progress-text">
+          Loading...
+        </div>
+      </div>
+    </div>
+
+    <div id="main-interface">
+      <div id="main-header">
+        BloxF2R
+      </div>
+      <div id="main-selected-item">
+        Selected item:
+      </div>
+      <div id="main-convert-to">
+        Convert to...
+      </div>
+      <div id="main-convert-buttons">
+        <button id="main-convert-to-code-button">
+          Code
+        </button>
+        <button id="main-convert-to-object-button">
+          Object
+        </button>
+      </div>
+    </div>
+
+    <div id="converting-process">
+      <div id="progress-title">
+        Converting into...
+      </div>
+      <div id="progress-bar-div">
+        <progress id='progress-bar' max="100" value="0"></progress>
+      </div>
+      <div id="download-button-div">
+        <button id="download-button">
+          Download
+        </button>
+      </div>
+      <div id="back-to-main-div">
+        <button id="back-to-main-button">
+          Back
+        </button>
+      </div>
+    </div>
+  </body>
+  <script>
+    const signUp = document.getElementById('sign-up');
+    const apiInput = document.getElementById('password-input');
+    const progressText = document.getElementById('progress-text');
+    //
+    const mainInterface = document.getElementById('main-interface');
+    const convertIntoCode = document.getElementById('main-convert-to-code-button');
+    const convertIntoObject = document.getElementById('main-convert-to-object-button');
+    //
+    const convertingProcess = document.getElementById('converting-process');
+    const progressBar = document.getElementById('progress-bar');
+    const downloadButton = document.getElementById('download-button');
+    const backToMainButton = document.getElementById('back-to-main-button');
+    //
+    document.addEventListener('keydown', (event) => {
+      switch (event.key) {
+        case "Enter":
+          if (
+            (signUp.style.display === 'flex') && 
+            (mainInterface.style.display === 'none') && 
+            (convertingProcess.style.display === 'none')
+          ) {
+            progressText.style.display = 'flex';
+            parent.postMessage({
+              type: 'check-password', 
+              value: apiInput.value
+              }, 
+              "*"
+            );
+          }
+          break;
+        default:
+          progressText.style.display = 'none';
+          postMessage({
+              type: 'unhandled-key'
+            }, 
+            "*"
+          );
+      }
+    });
+    //
+    convertIntoCode.addEventListener('click', (event) => {
+      if (
+        (signUp.style.display === 'flex') && 
+        (mainInterface.style.display === 'none') && 
+        (convertingProcess.style.display === 'none')
+      ) {
+        signUp.style.display = 'none';
+        mainInterface.style.display = 'none';
+        convertingProcess.style.display = 'flexd';
+        postMessage({
+            type: 'convert-to-code',
+          }, 
+          '*'
+        );
+      }
+    });
+    //
+    convertIntoObject.addEventListener('click', (event) => {
+      if (
+        (signUp.style.display === 'flex') && 
+        (mainInterface.style.display === 'none') && 
+        (convertingProcess.style.display === 'none')
+      ) {
+        signUp.style.display = 'none';
+        mainInterface.style.display = 'none';
+        convertingProcess.style.display = 'flex';
+        postMessage({
+            type: 'convert-to-object',
+          }, 
+          '*'
+        );
+      }
+    });
+    //
+    downloadButton.addEventListener('click', (event) => {
+      if (
+        (signUp.style.display === 'none') && 
+        (mainInterface.style.display === 'none') && 
+        (convertingProcess.style.display === 'flex')
+      ) {
+        postMessage({
+            type: 'download',
+          }, 
+          '*'
+        );
+      }
+    });
+    //
+    backToMainButton.addEventListener('click', (event) => {
+      if (
+        (signUp.style.display === 'none') && 
+        (mainInterface.style.display === 'none') && 
+        (convertingProcess.style.display === 'flex')
+      ) {
+        signUp.style.display = 'none';
+        mainInterface.style.display = 'flex';
+        convertingProcess.style.display = 'none';
+        postMessage({
+            type: 'back-to-main',
+          }, 
+          '*'
+        );
+      }
+    });
+  </script>
+</html>

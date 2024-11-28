@@ -15,6 +15,7 @@
   "devDependencies": {
     "@figma/eslint-plugin-figma-plugins": "*",
     "@figma/plugin-typings": "^1.102.0",
+    "@types/express": "^5.0.0",
     "@types/node": "^22.10.1",
     "@types/pg": "^8.11.10",
     "@typescript-eslint/eslint-plugin": "^6.12.0",

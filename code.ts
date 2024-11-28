@@ -1,21 +1,15 @@
 import { Client } from 'pg';
+import express from 'express';
 
-const client = new Client({
-  connectionString: process.env.PORT,
-  ssl: {
-    rejectUnauthorized: false,
-  }
+const app = express();
+
+app.get("/", (req, res) => {
+  res.json({
+    user: "meemsoossaas",
+  });
 });
 
-client.connect();
-
-client.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
-  if (err) throw err;
-  for (let row of res.rows) {
-    console.log(JSON.stringify(row));
-  }
-  client.end();
-});
+app.listen(process.env.PORT || 6969)
 
 figma.showUI(__html__, {width: 400, height: 250, visible: true});
 

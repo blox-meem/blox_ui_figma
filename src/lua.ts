@@ -7,12 +7,12 @@ interface RobloxCodeParser {
 abstract class Instance extends RobloxObject implements RobloxCodeParser{
     archivable: boolean;
     name: string;
-    parent: Instance;
+    parent?: Instance;
 
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
     }) {
         super();
         this.archivable = params.archivable ?? true;
@@ -25,7 +25,7 @@ abstract class Instance extends RobloxObject implements RobloxCodeParser{
         local object: Instance = Instance.new();
         object.Archivable = ${this.archivable}
         object.Name = ${this.name}
-        object.Parent = ${this.parent.toCode}
+        object.Parent = ${this.parent?.toCode ?? "nil"}
         `.trim();
     }
 }
@@ -182,7 +182,7 @@ export class Camera extends Instance {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         cframe?: CFrame,
         cameraSubject?: Instance,
@@ -445,11 +445,11 @@ export enum TableMajorAxis {
 
 //
 
-abstract class GuiBase extends Instance {
+export abstract class GuiBase extends Instance {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
     }) {
         super({
             archivable: params.archivable, 
@@ -471,7 +471,7 @@ abstract class GuiBase2d extends GuiBase {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -532,7 +532,7 @@ abstract class GuiBase3d extends GuiBase {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         color3: Color3,
         transparency: number,
@@ -586,7 +586,7 @@ abstract class GuiObject extends GuiBase2d {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -699,7 +699,7 @@ abstract class GuiButton extends GuiObject {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -799,7 +799,7 @@ export class Frame extends GuiObject {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -904,7 +904,7 @@ export class ScrollingFrame extends GuiObject {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -1041,7 +1041,7 @@ export class VideoFrame extends GuiObject {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -1149,7 +1149,7 @@ export class ViewportFrame extends GuiObject {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -1264,7 +1264,7 @@ abstract class ImageObject extends GuiObject {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -1380,7 +1380,7 @@ export class ImageLabel extends ImageObject {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -1489,7 +1489,7 @@ export class ImageButton extends ImageObject implements GuiButton {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -1535,10 +1535,10 @@ export class ImageButton extends ImageObject implements GuiButton {
         sliceScale?: number,
         tileSize?: UDim2,
         //
-        autoButtonColor: boolean,
-        modal: boolean,
-        selected: boolean,
-        style: ButtonStyle,
+        autoButtonColor?: boolean,
+        modal?: boolean,
+        selected?: boolean,
+        style?: ButtonStyle,
         //
         hoverImage?: string,
         pressedImage?: string,
@@ -1631,7 +1631,7 @@ abstract class TextObject extends GuiObject {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -1768,7 +1768,7 @@ export class TextLabel extends TextObject {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -1889,7 +1889,7 @@ export class TextButton extends TextObject implements GuiButton {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -2023,7 +2023,7 @@ export class TextBox extends TextObject {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         autoLocalize?: boolean,
         rootLocalizationTable?: LocalizationTable,
@@ -2170,7 +2170,7 @@ abstract class UIBase extends Instance {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
     }) {
         super({
             archivable: params.archivable, 
@@ -2184,7 +2184,7 @@ abstract class UIComponent extends UIBase {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
     }) {
         super({
             archivable: params.archivable, 
@@ -2198,7 +2198,7 @@ abstract class UIConstraint extends UIComponent {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
     }) {
         super({
             archivable: params.archivable, 
@@ -2212,7 +2212,7 @@ abstract class UILayout extends UIComponent {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
     }) {
         super({
             archivable: params.archivable, 
@@ -2231,7 +2231,7 @@ abstract class UIGridStyleLayout extends UILayout {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         fillDirection?: FillDirection,
         horizontalAlignment?: HorizontalAlignment,
@@ -2267,7 +2267,7 @@ export class UIAspectRatioConstraint extends UIConstraint {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         aspectRatio?: number;
         aspectType?: AspectType;
@@ -2298,7 +2298,7 @@ export class UICorner extends UIConstraint {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         cornerRadius?: UDim,
     }) {
@@ -2326,7 +2326,7 @@ export class UIFlexItem extends UIComponent {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         flexMode?: UIFlexMode,
         growRatio?: number,
@@ -2364,7 +2364,7 @@ export class UIGradient extends UIComponent {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         color?: ColorSequence,
         enabled?: boolean,
@@ -2408,7 +2408,7 @@ export class UIGridLayout extends UIGridStyleLayout {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         fillDirection?: FillDirection,
         horizontalAlignment?: HorizontalAlignment,
@@ -2456,7 +2456,7 @@ export class UIListLayout extends UIGridStyleLayout {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         fillDirection?: FillDirection,
         horizontalAlignment?: HorizontalAlignment,
@@ -2506,7 +2506,7 @@ export class UIPadding extends UIComponent {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         paddingBottom?: UDim,
         paddingLeft?: UDim,
@@ -2548,7 +2548,7 @@ export class UIPageLayout extends UIGridStyleLayout {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         fillDirection?: FillDirection,
         horizontalAlignment?: HorizontalAlignment,
@@ -2607,7 +2607,7 @@ export class UIScale extends UIComponent {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         scale?: number,
     }) {
@@ -2633,7 +2633,7 @@ export class UISizeConstraint extends UIConstraint {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         maxSize?: Vector2,
         minSize?: Vector2,
@@ -2666,7 +2666,7 @@ export class UIStroke extends UIComponent {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         applyStrokeMode?: ApplyStrokeMode,
         color?: Color3,
@@ -2709,7 +2709,7 @@ export class UITableLayout extends UIGridStyleLayout {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         fillDirection?: FillDirection,
         horizontalAlignment?: HorizontalAlignment,
@@ -2754,7 +2754,7 @@ export class UITextSizeConstraint extends UIConstraint {
     constructor(params: {
         archivable?: boolean,
         name?: string,
-        parent: Instance,
+        parent?: Instance,
         //
         maxTextSize?: number,
         minTextSize?: number,    

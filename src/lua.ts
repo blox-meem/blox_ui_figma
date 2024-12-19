@@ -1,4 +1,38 @@
-export class LocalizationTable {}
+abstract class RobloxObject {}
+
+interface RobloxCodeParser {
+    toCode(variableName: string): string;
+}
+
+abstract class Instance extends RobloxObject implements RobloxCodeParser{
+    archivable: boolean;
+    name: string;
+    parent: Instance;
+
+    constructor(params: {
+        archivable?: boolean,
+        name?: string,
+        parent: Instance,
+    }) {
+        super();
+        this.archivable = params.archivable ?? true;
+        this.name = params.name ?? 'Instance';
+        this.parent = params.parent;
+    }
+
+    toCode(variableName: string): string {
+        return `
+        local object: Instance = Instance.new();
+        object.Archivable = ${this.archivable}
+        object.Name = ${this.name}
+        object.Parent = ${this.parent.toCode}
+        `.trim();
+    }
+}
+
+export class LocalizationTable {
+    constructor() {}
+}
 
 export enum SelectionBehavior {
     escape, 
@@ -18,9 +52,9 @@ export class Color3 {
 }
 
 export class Vector2 {
-    static zero = new Vector2(0, 0);
+    static zero: Vector2 = new Vector2(0, 0);
     
-    static one = new Vector2(1, 1);
+    static one: Vector2 = new Vector2(1, 1);
 
     x: number;
     y: number;
@@ -110,7 +144,74 @@ export enum VerticalScrollBarPosition {
     left
 }
 
-export class Camera {}
+export class CFrame {
+    identity?: CFrame;
+    position?: Vector3;
+    rotation?: CFrame;
+    x?: number;
+    y?: number;
+    z?: number;
+    lookVector?: Vector3;
+    rightVector?: Vector3;
+    upVector?: Vector3;
+    xVector?: Vector3;
+    yVector?: Vector3;
+    zVector?: Vector3;
+
+    constructor() {}
+}
+
+export enum FieldOfViewMode {
+    vertical,
+    diagonal,
+    maxAxis
+}
+
+export class Camera extends Instance {
+    cframe: CFrame;
+    cameraSubject?: Instance;
+    diagonalFieldOfView: number;
+    fieldOfView: number;
+    fieldOfViewMode: FieldOfViewMode;
+    focus: CFrame;
+    headLocked: boolean;
+    headScale: number;
+    maxAxisFieldOfView: number;
+    vrTiltAndRollEnabled: boolean;
+
+    constructor(params: {
+        archivable?: boolean,
+        name?: string,
+        parent: Instance,
+        //
+        cframe?: CFrame,
+        cameraSubject?: Instance,
+        diagonalFieldOfView?: number,
+        fieldOfView?: number,
+        fieldOfViewMode?: FieldOfViewMode,
+        focus?: CFrame,
+        headLocked?: boolean,
+        headScale?: number,
+        maxAxisFieldOfView?: number,
+        vrTiltAndRollEnabled?: boolean,
+    }) {
+        super({
+            archivable: params.archivable,
+            name: params.name,
+            parent: params.parent,
+        });
+        this.cframe = params.cframe ?? new CFrame();
+        this.cameraSubject = params.cameraSubject;
+        this.diagonalFieldOfView = params.diagonalFieldOfView ?? 88.877;
+        this.fieldOfView = params.fieldOfView ?? 70;
+        this.fieldOfViewMode = params.fieldOfViewMode ?? FieldOfViewMode.vertical;
+        this.focus = params.focus ?? new CFrame();
+        this.headLocked = params.headLocked ?? true;
+        this.headScale = params.headScale ?? 1;
+        this.maxAxisFieldOfView = params.maxAxisFieldOfView ?? 70;
+        this.vrTiltAndRollEnabled = params.vrTiltAndRollEnabled ?? false;  
+    }
+}
 
 export class Vector3 {
     static zero = new Vector2(0, 0);
@@ -344,25 +445,6 @@ export enum TableMajorAxis {
 
 //
 
-abstract class RobloxObject {}
-
-abstract class Instance extends RobloxObject {
-    archivable: boolean;
-    name: string;
-    parent: Instance;
-
-    constructor(params: {
-        archivable?: boolean,
-        name?: string,
-        parent: Instance,
-    }) {
-        super();
-        this.archivable = params.archivable ?? true;
-        this.name = params.name ?? 'Instance';
-        this.parent = params.parent;
-    }
-}
-
 abstract class GuiBase extends Instance {
     constructor(params: {
         archivable?: boolean,
@@ -412,6 +494,34 @@ abstract class GuiBase2d extends GuiBase {
         this.selectionBehaviorUp = params.selectionBehaviorUp ?? SelectionBehavior.escape;
         this.selectionGroup = params.selectionGroup ?? false;
     }
+
+    toObject(): object {
+        return  {
+            archivable: this.archivable,
+            name: this.name,
+            parent: this.parent,
+            //
+            autoLocalize: this.autoLocalize,
+            rootLocalizationTable: this.rootLocalizationTable,
+            selectionBehaviorDown: this.selectionBehaviorDown,
+            selectionBehaviorLeft: this.selectionBehaviorLeft,
+            selectionBehaviorRight: this.selectionBehaviorRight,
+            selectionBehaviorUp: this.selectionBehaviorUp,
+            selectionGroup: this.selectionGroup,
+        };
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.AutoLocalize = ${this.autoLocalize}
+        ${variableName}.RootLocalizationTable = ${this.rootLocalizationTable ?? 'nil'}
+        ${variableName}.SelectionBehaviorDown = ${this.selectionBehaviorDown}
+        ${variableName}.SelectionBehaviorLeft = ${this.selectionBehaviorLeft}
+        ${variableName}.SelectionBehaviorRight = ${this.selectionBehaviorRight}
+        ${variableName}.SelectionBehaviorUp = ${this.selectionBehaviorUp}
+        ${variableName}.SelectionGroup = ${this.selectionGroup}
+        `;
+    }
 }
 
 abstract class GuiBase3d extends GuiBase {
@@ -436,6 +546,14 @@ abstract class GuiBase3d extends GuiBase {
         this.color3 = params.color3;
         this.transparency = params.transparency;
         this.visible = params.visible;
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.Color3 = ${this.color3}
+        ${variableName}.Transparency = ${this.transparency}
+        ${variableName}.Visible = ${this.visible} 
+        `;
     }
 }
 
@@ -541,6 +659,35 @@ abstract class GuiObject extends GuiBase2d {
         this.visible = params.visible ?? true;
         this.zIndex = params.zIndex ?? 1;
     }  
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.Active = ${this.active}
+        ${variableName}.AnchorPoint = ${this.anchorPoint}
+        ${variableName}.AutomaticSize = ${this.automaticSize}
+        ${variableName}.BackgroundColor = ${this.backgroundColor}
+        ${variableName}.BackgroundTransparency = ${this.backgroundTransparency}
+        ${variableName}.BorderColor3 = ${this.borderColor3}
+        ${variableName}.BorderMode = ${this.borderMode}
+        ${variableName}.BorderSizePixel = ${this.borderSizePixel}
+        ${variableName}.ClipDescendants = ${this.clipDescendants}
+        ${variableName}.Interactable = ${this.interactable}
+        ${variableName}.LayoutOrder = ${this.layoutOrder}
+        ${variableName}.NextSelectionDown = ${this.nextSelectionDown}
+        ${variableName}.NextSelectionLeft = ${this.nextSelectionLeft}
+        ${variableName}.NextSelectionRight = ${this.nextSelectionRight}
+        ${variableName}.NextSelectionUp = ${this.nextSelectionUp}
+        ${variableName}.Position = ${this.position}
+        ${variableName}.Rotation = ${this.rotation}
+        ${variableName}.Selectable = ${this.selectable}
+        ${variableName}.SelectionImageObject = ${this.selectionImageObject}
+        ${variableName}.SelectionOrder = ${this.selectionOrder}
+        ${variableName}.Size = ${this.size}
+        ${variableName}.SizeConstraint = ${this.sizeConstraint}
+        ${variableName}.Visible = ${this.visible}
+        ${variableName}.ZIndex = ${this.zIndex}
+        `;
+    }
 }
 
 abstract class GuiButton extends GuiObject {
@@ -635,6 +782,15 @@ abstract class GuiButton extends GuiObject {
         this.selected = params.selected ?? false;
         this.style = params.style ?? ButtonStyle.custom;
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.AutoButtonColor = ${this.autoButtonColor}
+        ${variableName}.Modal = ${this.modal}
+        ${variableName}.Selected = ${this.selected}
+        ${variableName}.Style = ${this.style}
+        `;
+    }
 }
 
 export class Frame extends GuiObject {
@@ -719,6 +875,12 @@ export class Frame extends GuiObject {
             zIndex: params.zIndex,
         });
         this.style = params.style ?? FrameStyle.custom;
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.Style = ${this.style}
+        `;
     }
 }
 
@@ -847,6 +1009,26 @@ export class ScrollingFrame extends GuiObject {
         this.verticalScrollBarInset = params.verticalScrollBarInset ?? ScrollBarInset.none;
         this.verticalScrollBarPosition = params.verticalScrollBarPosition ?? VerticalScrollBarPosition.right;
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.AutomaticCanvasSize = ${this.automaticCanvasSize}
+        ${variableName}.BottomImage = ${this.bottomImage}
+        ${variableName}.CanvasPosition = ${this.canvasPosition}
+        ${variableName}.CanvasSize = ${this.canvasSize}
+        ${variableName}.ElasticBehavior = ${this.elasticBehavior}
+        ${variableName}.HorizontalScrollBarInset = ${this.horizontalScrollBarInset}
+        ${variableName}.MidImage = ${this.midImage}
+        ${variableName}.ScrollBarImageColor3 = ${this.scrollBarImageColor3}
+        ${variableName}.ScrollBarImageTransparency = ${this.scrollBarImageTransparency}
+        ${variableName}.ScrollBarThickness = ${this.scrollBarThickness}
+        ${variableName}.ScrollingDirection = ${this.scrollingDirection}
+        ${variableName}.ScrollingEnabled = ${this.scrollingEnabled}
+        ${variableName}.TopImage = ${this.topImage}
+        ${variableName}.VerticalScrollBarInset = ${this.verticalScrollBarInset}
+        ${variableName}.VerticalScrollBarPosition = ${this.verticalScrollBarPosition}
+        `;
+    }
 }
 
 export class VideoFrame extends GuiObject {
@@ -943,6 +1125,16 @@ export class VideoFrame extends GuiObject {
         this.timePosition = params.timePosition ?? 0;
         this.video = params.video;
         this.volume = params.volume ?? 1;
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.Looped = ${this.looped}
+        ${variableName}.Playing = ${this.playing}
+        ${variableName}.TimePosition = ${this.timePosition}
+        ${variableName}.Looped = ${this.video ?? ''}
+        ${variableName}.Volume = ${this.volume}
+        `;
     }
 }
 
@@ -1043,6 +1235,17 @@ export class ViewportFrame extends GuiObject {
         this.imageTransparency = params.imageTransparency ?? 0;
         this.lightColor = params.lightColor ?? new Color3(140, 140, 140);
         this.lightDirection = params.lightDirection ?? new Vector3(-1, -1, -1);
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.Ambient = ${this.ambient}
+        ${variableName}.CurrentCamera = ${this.currentCamera}
+        ${variableName}.ImageColor3 = ${this.imageColor3}
+        ${variableName}.ImageTransparency = ${this.imageTransparency}
+        ${variableName}.LightColor = ${this.lightColor}
+        ${variableName}.LightDirection = ${this.lightDirection}
+        `;
     }
 }
 
@@ -1155,6 +1358,21 @@ abstract class ImageObject extends GuiObject {
         this.sliceCenter = params.sliceCenter ?? new Rect(Vector2.zero, Vector2.zero);
         this.sliceScale = params.sliceScale ?? 1;
         this.tileSize = params.tileSize ?? new UDim2(1, 0, 1, 0);
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.Image = ${this.image}
+        ${variableName}.ImageColor3 = ${this.imageColor3}
+        ${variableName}.ImageRectOffset = ${this.imageRectOffset}
+        ${variableName}.ImageRectSize = ${this.imageRectSize}
+        ${variableName}.ImageTransparency = ${this.imageTransparency}
+        ${variableName}.ResampleMode = ${this.resampleMode}
+        ${variableName}.ScaleType = ${this.scaleType}
+        ${variableName}.SliceCenter = ${this.sliceCenter}
+        ${variableName}.SliceScale = ${this.sliceScale}
+        ${variableName}.TileSize = ${this.tileSize}
+        `;
     }
 }
 
@@ -1382,6 +1600,13 @@ export class ImageButton extends ImageObject implements GuiButton {
         this.hoverImage = params.hoverImage;
         this.pressedImage = params.pressedImage;
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.HoverImage = ${this.hoverImage}
+        ${variableName}.PressedImage = ${this.pressedImage}
+        `;
+    }
 }
 
 abstract class TextObject extends GuiObject {
@@ -1514,6 +1739,28 @@ abstract class TextObject extends GuiObject {
         this.textWrapped = params.textWrapped ?? false;
         this.textXAlignment = params.textXAlignment ?? TextXAlignment.center;
         this.textYAlignment = params.textYAlignment ?? TextYAlignment.center;
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.FontFace = ${this.fontFace}
+        ${variableName}.LineHeight = ${this.lineHeight}
+        ${variableName}.MaxVisibleGraphemes = ${this.maxVisibleGraphemes}
+        ${variableName}.OpenTypeFeatures = ${this.openTypeFeatures}
+        ${variableName}.RichText = ${this.richText}
+        ${variableName}.Text = ${this.text}
+        ${variableName}.TextColor = ${this.textColor}
+        ${variableName}.TextDirection = ${this.textDirection}
+        ${variableName}.TextScaled = ${this.textScaled}
+        ${variableName}.TextSize = ${this.textSize}
+        ${variableName}.TextStrokeColor = ${this.textStrokeColor}
+        ${variableName}.TextStrokeTransparency = ${this.textStrokeTransparency}
+        ${variableName}.TextTransparency = ${this.textTransparency}
+        ${variableName}.TextTruncate = ${this.textTruncate}
+        ${variableName}.TextWrapped = ${this.textWrapped}
+        ${variableName}.TextXAlignment = ${this.textXAlignment}
+        ${variableName}.TextYAlignment = ${this.textYAlignment}
+        `;
     }
 }
 
@@ -1904,6 +2151,19 @@ export class TextBox extends TextObject {
         this.showNativeInput = params.showNativeInput ?? true;
         this.textEditable = params.textEditable ?? true;
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.ClearTextFocus = ${this.clearTextFocus}
+        ${variableName}.CursorPosition = ${this.cursorPosition}
+        ${variableName}.MultiLine = ${this.multiLine}
+        ${variableName}.PlaceholderColor3 = ${this.placeholderColor3}
+        ${variableName}.PlaceholderText = ${this.placeholderText}
+        ${variableName}.SelectionStart = ${this.selectionStart}
+        ${variableName}.ShowNativeInput = ${this.showNativeInput}
+        ${variableName}.TextEditable = ${this.textEditable}
+        `;
+    }
 }
 
 abstract class UIBase extends Instance {
@@ -1988,6 +2248,15 @@ abstract class UIGridStyleLayout extends UILayout {
         this.sortOrder = params.sortOrder ?? SortOrder.layoutOrder;
         this.verticalAlignment = params.verticalAlignment ?? VerticalAlignment.top;
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.FillDirection = ${this.fillDirection}
+        ${variableName}.HorizontalAlignment = ${this.horizontalAlignment}
+        ${variableName}.SortOrder = ${this.sortOrder}
+        ${variableName}.VerticalAlignment = ${this.verticalAlignment}
+        `;
+    }
 }
 
 export class UIAspectRatioConstraint extends UIConstraint {
@@ -2013,6 +2282,14 @@ export class UIAspectRatioConstraint extends UIConstraint {
         this.aspectType =  params.aspectType ?? AspectType.fitWithInMaxSize;
         this.dominantAxis = params.dominantAxis ?? DominantAxis.width;
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.AspectRatio = ${this.aspectRatio}
+        ${variableName}.AspectType = ${this.aspectType}
+        ${variableName}.DominantAxis = ${this.dominantAxis}
+        `;
+    }
 }
 
 export class UICorner extends UIConstraint {
@@ -2031,6 +2308,12 @@ export class UICorner extends UIConstraint {
             parent: params.parent
         });
         this.cornerRadius = params.cornerRadius ?? new UDim(0, 8);
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.CornerRadius = ${this.cornerRadius}
+        `;
     }
 }
 
@@ -2059,6 +2342,15 @@ export class UIFlexItem extends UIComponent {
         this.growRatio = params.growRatio ?? 0;
         this.itemLineAlignment = params.itemLineAlignment ?? ItemLineAlignment.automatic;
         this.shrinkRatio = params.shrinkRatio ?? 0;
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.FlexMode = ${this.flexMode}
+        ${variableName}.GrowRatio = ${this.growRatio}
+        ${variableName}.ItemLineAlignment = ${this.itemLineAlignment}
+        ${variableName}.ShrinkRatio = ${this.shrinkRatio}
+        `;
     }
 }
 
@@ -2094,6 +2386,16 @@ export class UIGradient extends UIComponent {
         this.transparency = params.transparency ?? new NumberSequence([
             new NumberSequenceKeypoint(0, 0, 0),
         ]);
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.Color = ${this.color}
+        ${variableName}.Enabled = ${this.enabled}
+        ${variableName}.Offset = ${this.offset}
+        ${variableName}.Rotation = ${this.rotation}
+        ${variableName}.Transparency = ${this.transparency}
+        `;
     }
 }
 
@@ -2132,6 +2434,15 @@ export class UIGridLayout extends UIGridStyleLayout {
         this.cellSize = params.cellSize ?? new UDim2(0, 100, 0, 100);
         this.fillDirectionMaxCells = params.fillDirectionMaxCells ?? 0;
         this.startCorner = params.startCorner ?? StartCorner.topLeft;
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.CellPadding = ${this.cellPadding}
+        ${variableName}.CellSize = ${this.cellSize}
+        ${variableName}.FillDirectionMaxCells = ${this.fillDirectionMaxCells}
+        ${variableName}.StartCorner = ${this.startCorner}
+        `;
     }
 }
 
@@ -2174,6 +2485,16 @@ export class UIListLayout extends UIGridStyleLayout {
         this.verticalFlex = params.verticalFlex ?? UIFlexAlignment.none;
         this.wraps = params.wraps ?? false;
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.HorizontalFlex = ${this.horizontalFlex}
+        ${variableName}.ItemLineAlignment = ${this.itemLineAlignment}
+        ${variableName}.Padding = ${this.padding}
+        ${variableName}.VerticalFlex = ${this.verticalFlex}
+        ${variableName}.Wraps = ${this.wraps}
+        `;
+    }
 }
 
 export class UIPadding extends UIComponent {
@@ -2201,6 +2522,15 @@ export class UIPadding extends UIComponent {
         this.paddingLeft = params.paddingLeft ?? new UDim(0, 0);
         this.paddingRight = params.paddingRight ?? new UDim(0, 0);
         this.paddingTop = params.paddingTop ?? new UDim(0, 0);
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.PaddingBottom = ${this.paddingBottom}
+        ${variableName}.PaddingLeft = ${this.paddingLeft}
+        ${variableName}.PaddingRight = ${this.paddingRight}
+        ${variableName}.PaddingTop = ${this.paddingTop}
+        `;
     }
 }
 
@@ -2255,6 +2585,20 @@ export class UIPageLayout extends UIGridStyleLayout {
         this.touchInputEnabled = params.touchInputEnabled ?? true;
         this.tweenTime = params.tweenTime ?? 1;
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.Animated = ${this.animated}
+        ${variableName}.Circular = ${this.circular}
+        ${variableName}.EasingDirection = ${this.easingDirection}
+        ${variableName}.EasingStyle = ${this.easingStyle}
+        ${variableName}.GamepadInputEnabled = ${this.gamepadInputEnabled}
+        ${variableName}.Padding = ${this.padding}
+        ${variableName}.ScrollWheelInputEnabled = ${this.scrollWheelInputEnabled}
+        ${variableName}.TouchInputEnabled = ${this.touchInputEnabled}
+        ${variableName}.TweenTime = ${this.tweenTime}
+        `;
+    }
 }
 
 export class UIScale extends UIComponent {
@@ -2273,6 +2617,12 @@ export class UIScale extends UIComponent {
             parent: params.parent
         });
         this.scale = params.scale ?? 1;
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.Scale = ${this.scale}
+        `;
     }
 }
 
@@ -2295,6 +2645,13 @@ export class UISizeConstraint extends UIConstraint {
         });
         this.maxSize = params.maxSize ?? new Vector2(Infinity, Infinity);
         this.minSize = params.minSize ?? Vector2.zero;
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.MaxSize = ${this.maxSize}
+        ${variableName}.MinSize = ${this.minSize}
+        `;
     }
 }
 
@@ -2329,6 +2686,17 @@ export class UIStroke extends UIComponent {
         this.lineJoinMode = params.lineJoinMode ?? LineJoinMode.round;
         this.thickness = params.thickness ?? 1;
         this.transparency = params.transparency ?? 0;
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.ApplyStrokeMode = ${this.applyStrokeMode}
+        ${variableName}.Color = ${this.color}
+        ${variableName}.Enabled = ${this.enabled}
+        ${variableName}.LineJoinMode = ${this.lineJoinMode}
+        ${variableName}.Thickness = ${this.thickness}
+        ${variableName}.Transparency = ${this.transparency}
+        `;
     }
 }
 
@@ -2368,6 +2736,15 @@ export class UITableLayout extends UIGridStyleLayout {
         this.majorAxis = params.majorAxis ?? TableMajorAxis.rowMajor;
         this.padding = params.padding ?? new UDim2(0, 0, 0, 0);
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.FillEmptySpaceColumns = ${this.fillEmptySpaceColumns}
+        ${variableName}.FillEmptySpaceRows = ${this.fillEmptySpaceRows}
+        ${variableName}.MajorAxis = ${this.majorAxis}
+        ${variableName}.Padding = ${this.padding}
+        `;
+    }
 }
 
 export class UITextSizeConstraint extends UIConstraint {
@@ -2389,5 +2766,12 @@ export class UITextSizeConstraint extends UIConstraint {
         });
         this.maxTextSize = params.maxTextSize ?? 100;
         this.minTextSize = params.minTextSize ?? 1;
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.MaxTextSize = ${this.maxTextSize}
+        ${variableName}.MinTextSize = ${this.minTextSize}
+        `;
     }
 }

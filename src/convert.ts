@@ -1,6 +1,38 @@
 import { assert } from "console";
 import { bloxUITitle, codeGenerationLanguage, dartTitle, luaCodeTitle } from "./constants";
-import { Frame, GuiBase, ImageButton, ImageLabel, ScrollingFrame, TextBox, TextButton, TextLabel, UIAspectRatioConstraint, UICorner, UIFlexItem, UIGradient, UIGridLayout, UIListLayout, UIPadding, UIPageLayout, UIScale, UISizeConstraint, UIStroke, UITableLayout, UITextSizeConstraint, VideoFrame, ViewportFrame } from "./lua";
+import { 
+    Frame, 
+    GuiBase, 
+    ImageButton, 
+    ImageLabel, 
+    Instance,
+    LocalizationTable, 
+    SafeAreaCompatibility, 
+    ScreenGui,
+    ScreenGuiProperties,
+    ScreenInsets, 
+    ScrollingFrame, 
+    SelectionBehavior,
+    TextBox, 
+    TextButton, 
+    TextLabel, 
+    UIAspectRatioConstraint, 
+    UICorner, 
+    UIFlexItem, 
+    UIGradient, 
+    UIGridLayout, 
+    UIListLayout, 
+    UIPadding, 
+    UIPageLayout, 
+    UIScale, 
+    UISizeConstraint, 
+    UIStroke, 
+    UITableLayout, 
+    UITextSizeConstraint, 
+    VideoFrame, 
+    ViewportFrame, 
+    ZIndexBehaviour 
+} from "./lua";
 
 
 export enum BloxF2RLanguages {
@@ -1127,28 +1159,54 @@ export async function convertFigmaToFigmaObject(node: FigmaObjectType, typeValue
 
 declare type FigmaObjects = FigmaRectangle | FigmaEllipse | FigmaText | FigmaImage | FigmaVideo;
 
-export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): GuiBase {
+export function assembleScreenGui(params: ScreenGuiProperties): ScreenGui {
+    return new ScreenGui(params);
+}
+
+export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects, screenGuiProperties: ScreenGuiProperties): GuiBase {
+    const screenGui: ScreenGui = new ScreenGui(screenGuiProperties);
     switch (figmaObject.figmaObjectType) {
         case "FRAME":
-            return new Frame({});
+            const rectangleFrameObject: FigmaRectangle = (figmaObject as FigmaRectangle);
+            return new Frame({
+                parent: screenGui,
+            });
         case "SCROLLINGFRAME":
-            return new ScrollingFrame({});
+            return new ScrollingFrame({
+                parent: screenGui,
+            });
         case "TEXTBOX":
-            return new TextBox({});
+            return new TextBox({
+                parent: screenGui,
+            });
         case "TEXTBUTTON":
-            return new TextButton({});
+            return new TextButton({
+                parent: screenGui,
+            });
         case "TEXTLABEL":
-            return new TextLabel({});
+            return new TextLabel({
+                parent: screenGui,
+            });
         case "FRAME":
-            return new Frame({});
+            return new Frame({
+                parent: screenGui,
+            });
         case "VIEWPORTFRAME":
-            return new ViewportFrame({});
+            return new ViewportFrame({
+                parent: screenGui,
+            });
         case "IMAGELABEL":
-            return new ImageLabel({});
+            return new ImageLabel({
+                parent: screenGui,
+            });
         case "IMAGEBUTTON":
-            return new ImageButton({});
+            return new ImageButton({
+                parent: screenGui,
+            });
         case "VIDEOFRAME":
-            return new VideoFrame({});
+            return new VideoFrame({
+                parent: screenGui,
+            });
     }
 }
 

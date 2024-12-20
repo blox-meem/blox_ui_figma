@@ -1,10 +1,13 @@
+import { assert } from "console";
+import { off } from "process";
+
 abstract class RobloxObject {}
 
 interface RobloxCodeParser {
     toCode(variableName: string): string;
 }
 
-abstract class Instance extends RobloxObject implements RobloxCodeParser{
+export abstract class Instance extends RobloxObject implements RobloxCodeParser{
     archivable: boolean;
     name: string;
     parent?: Instance;
@@ -22,10 +25,10 @@ abstract class Instance extends RobloxObject implements RobloxCodeParser{
 
     toCode(variableName: string): string {
         return `
-        local object: Instance = Instance.new();
-        object.Archivable = ${this.archivable}
-        object.Name = ${this.name}
-        object.Parent = ${this.parent?.toCode ?? "nil"}
+        local ${variableName}: Instance = Instance.new();
+        ${variableName}.Archivable = ${this.archivable}
+        ${variableName}.Name = ${this.name}
+        ${variableName}.Parent = ${this.parent?.toCode ?? "nil"}
         `.trim();
     }
 }
@@ -35,23 +38,34 @@ export class LocalizationTable {
 }
 
 export enum SelectionBehavior {
-    escape, 
-    stop
+    escape,
+    stop,
 }
 
-export class Color3 {
+interface RobloxGlobalObject {
+    toCode(): string;
+}
+
+export class Color3 implements RobloxGlobalObject {
     r: number;
     g: number;
     b: number;
 
     constructor(r: number, g: number, b: number) {
+        assert(r >= 0 && r <= 255);
+        assert(g >= 0 && g <= 255);
+        assert(b >= 0 && b <= 255);
         this.r = r;
         this.g = g;
         this.b = b;
     }
+
+    toCode(): string {
+        return `Color3.fromRGB(${this.r}, ${this.g}, ${this.b})`;
+    }
 }
 
-export class Vector2 {
+export class Vector2 implements RobloxGlobalObject {
     static zero: Vector2 = new Vector2(0, 0);
     
     static one: Vector2 = new Vector2(1, 1);
@@ -62,6 +76,9 @@ export class Vector2 {
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
+    }
+    toCode(): string {
+        return `Vector.new(${this.x}, ${this.y})`;
     }
 }
 
@@ -76,7 +93,7 @@ export enum BorderMode {
     inset, middle, outline
 }
 
-export class UDim {
+export class UDim implements RobloxGlobalObject {
     scale: number;
     offset: number;
 
@@ -84,15 +101,23 @@ export class UDim {
         this.scale = scale;
         this.offset = offset;
     }
+
+    toCode(): string {
+        return `UDim.new(${this.scale}, ${this.offset})`;
+    }
 }
 
-export class UDim2 {
+export class UDim2 implements RobloxGlobalObject {
     x: UDim;
     y: UDim;
 
     constructor(xScale: number, xOffset: number, yScale: number, yOffset: number) {
         this.x = new UDim(xScale, xOffset);
         this.y = new UDim(yScale, yOffset);
+    }
+
+    toCode(): string {
+        return `UDIm2.new(${this.x.scale}, ${this.x.offset}, ${this.y.scale}, ${this.y.offset})`;
     }
 }
 
@@ -211,9 +236,24 @@ export class Camera extends Instance {
         this.maxAxisFieldOfView = params.maxAxisFieldOfView ?? 70;
         this.vrTiltAndRollEnabled = params.vrTiltAndRollEnabled ?? false;  
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.CFrame = ${this.cframe.toCode()}
+        ${variableName}.CameraSubject = ${this.cameraSubject?.toCode() ?? "nil"}
+        ${variableName}.DiagonalFieldOfView = ${this.diagonalFieldOfView.toCode()}
+        ${variableName}.FieldOfView = ${this.fieldOfView.toCode()}
+        ${variableName}.FieldOfViewMode = ${toCode(this.fieldOfViewMode)}
+        ${variableName}.Focus = ${this.focus.toCode()}
+        ${variableName}.HeadLocked = ${this.headLocked}
+        ${variableName}.HeadScale = ${this.headScale}
+        ${variableName}.MaxAxisFieldOfView = ${this.maxAxisFieldOfView}
+        ${variableName}.VRTiltAndRollEnabled = ${this.vrTiltAndRollEnabled}
+        `;
+    }
 }
 
-export class Vector3 {
+export class Vector3 implements RobloxGlobalObject {
     static zero = new Vector2(0, 0);
     
     static one = new Vector2(1, 1);
@@ -226,6 +266,9 @@ export class Vector3 {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+    toCode(): string {
+        return `Vector3.new(${this.x}, ${this.y}, ${this.z})`;
     }
 }
 
@@ -242,13 +285,17 @@ export enum ScaleType {
     crop
 }
 
-export class Rect {
+export class Rect implements RobloxGlobalObject {
     min: Vector2;
     max: Vector2;
 
     constructor(min: Vector2, max: Vector2) {
         this.min = min;
         this.max = max;
+    }
+
+    toCode(): string {
+        return `Rect.new(${this.min}, ${this.max})`;
     }
 }
 
@@ -276,7 +323,7 @@ export enum TextYAlignment {
     bottom
 }
 
-export class Font {
+export class Font implements RobloxGlobalObject {
     family: string; 
     weight: FontWeight; 
     style: FontStyle;
@@ -285,6 +332,9 @@ export class Font {
         this.family = family;
         this.weight = weight;
         this.style = style;
+    }
+    toCode(): string {
+        return `Font.new(${this.family}, ${this.weight}, ${this.style})`;
     }
 }
 
@@ -331,7 +381,7 @@ export enum ItemLineAlignment {
     scretch
 }
 
-export class ColorSequenceKeypoint {
+export class ColorSequenceKeypoint implements RobloxGlobalObject {
     time: number;
     value: Color3;
 
@@ -339,17 +389,29 @@ export class ColorSequenceKeypoint {
         this.time = time;
         this.value = color;
     }
+    toCode(): string {
+        return `ColorSequenceKeypoint.new(${this.time}, ${this.value.toCode()})`;
+    }
 }
 
-export class ColorSequence {
+export class ColorSequence implements RobloxGlobalObject {
     keypoints: ColorSequenceKeypoint[];
 
     constructor(keypoints: ColorSequenceKeypoint[]) {
         this.keypoints = keypoints;
     }
+
+    toCode(): string {
+        return `ColorSequence.new({${this.keypoints
+            .toString()
+            .replace("[", "")
+            .replace("]", "")
+            .trim()
+        })}`;
+    }
 }
 
-export class NumberSequenceKeypoint {
+export class NumberSequenceKeypoint implements RobloxGlobalObject {
     time: number;
     value: number;
     envelope: number;
@@ -359,13 +421,27 @@ export class NumberSequenceKeypoint {
         this.value = value;
         this.envelope = envelope;
     }
+
+    toCode(): string {
+        return `NumberSequenceKeypoint.new(${this.time}, ${this.value}, ${this.envelope})`;
+    }
 }
 
-export class NumberSequence {
+export class NumberSequence implements RobloxGlobalObject {
     keypoints: NumberSequenceKeypoint[];
 
     constructor(keypoints: NumberSequenceKeypoint[]) {
         this.keypoints = keypoints;
+    }
+
+    toCode(): string {
+        return `NumberSequence.new(${
+            this.keypoints
+            .toString()
+            .replace("[", "")
+            .replace("]", "")
+            .trim()
+        })`;
     }
 }
 
@@ -441,6 +517,164 @@ export enum LineJoinMode {
 export enum TableMajorAxis {
     rowMajor,
     columnMajor
+}
+
+export enum ZIndexBehaviour {
+   global,
+   sibling, 
+}
+
+export enum SafeAreaCompatibility {
+    none,
+    fullscreenExtension,
+}
+
+export enum ScreenInsets {
+    none,
+    deviceSafeInsets,
+    coreUISafeInsets,
+    topBarSafeInsets,
+}
+
+declare type RobloxEnumerations = 
+    | SelectionBehavior 
+    | AutomaticSize
+    | BorderMode
+    | SizeConstraint
+    | ButtonStyle
+    | FrameStyle
+    | ElasticBehavior
+    | ScrollBarInset
+    | ScrollingDirection
+    | VerticalScrollBarPosition
+    | FieldOfViewMode
+    | ResamplerMode
+    | ScaleType
+    | TextDirection
+    | TextTruncate
+    | TextXAlignment
+    | TextYAlignment
+    | FontWeight
+    | FontStyle
+    | AspectType
+    | DominantAxis
+    | UIFlexMode
+    | ItemLineAlignment
+    | StartCorner
+    | FillDirection
+    | HorizontalAlignment
+    | SortOrder
+    | VerticalAlignment
+    | UIFlexAlignment
+    | EasingDirection
+    | EasingStyle
+    | ApplyStrokeMode
+    | LineJoinMode
+    | TableMajorAxis
+    | ZIndexBehaviour
+    | SafeAreaCompatibility
+    | ScreenInsets
+;
+
+export function toCode(enumeration: RobloxEnumerations): string {
+    switch (enumeration) {
+        // SelectionBehavior
+        case SelectionBehavior.escape:
+            return `Enum.SelectionBehavior.Escape`;
+        case SelectionBehavior.stop:
+            return `Enum.SelectionBehavior.Stop`;
+        // AutomaticSize
+        case AutomaticSize.none:
+            return `Enum.AutomaticSize.None`;
+        case AutomaticSize.x:
+            return `Enum.AutomaticSize.X`;
+        case AutomaticSize.y:
+            return `Enum.AutomaticSize.Y`;
+        case AutomaticSize.xy:
+            return `Enum.AutomaticSize.XY`;
+        // BorderMode
+        case BorderMode.outline:
+            return `Enum.BorderMode.Outline`;
+        case BorderMode.middle:
+            return `Enum.BorderMode.Middle`;
+        case BorderMode.inset:
+            return `Enum.BorderMode.Inset`;
+        // SizeConstraint
+        case SizeConstraint.relativeXY:
+            return `Enum.SizeConstraint.RelativeXY`;
+        case SizeConstraint.relativeXX:
+            return `Enum.SizeConstraint.RelativeXX`;
+        case SizeConstraint.relativeYY:
+            return `Enum.SizeConstraint.RelativeYY`;
+        // ButtonStyle
+        case ButtonStyle.custom:
+            return `Enum.ButtonStyle.Custom`;
+        case ButtonStyle.robloxButtonDefault:
+            return `Enum.ButtonStyle.RobloxButtonDefault`;
+        case ButtonStyle.robloxButton:
+            return `Enum.ButtonStyle.RobloxButton`;
+        case ButtonStyle.robloxRoundButton:
+            return `Enum.ButtonStyle.RobloxRoundButton`;
+        case ButtonStyle.robloxRoundDefaultButton:
+            return `Enum.ButtonStyle.RobloxRoundDefaultButton`;
+        case ButtonStyle.robloxRoundDropdownButton:
+            return `Enum.ButtonStyle.RobloxRoundDropdownButton`;
+        // FrameStyle
+        case FrameStyle.custom:
+            return `Enum.FrameStyle.Custom`;
+        case FrameStyle.chatBlue:
+            return `Enum.FrameStyle.ChatBlue`;
+        case FrameStyle.robloxSquare:
+            return `Enum.FrameStyle.RobloxSquare`;
+        case FrameStyle.robloxRound:
+            return `Enum.FrameStyle.RobloxRound`;
+        case FrameStyle.chatGreen:
+            return `Enum.FrameStyle.ChatGreen`;
+        case FrameStyle.chatRed:
+            return `Enum.FrameStyle.ChatRed`;  
+        case FrameStyle.dropShadow:
+            return `Enum.FrameStyle.DropShadow`;
+        // ElasticBehavior
+        case ElasticBehavior.whenScrollable:
+            return `Enum.ElasticBehavior.WhenScrollable`;
+        case ElasticBehavior.always:
+            return `Enum.ElasticBehavior.Always`;  
+        case ElasticBehavior.never:
+            return `Enum.ElasticBehavior.Never`;
+        // ScrollBarInset
+        case ScrollBarInset.none:
+            return `Enum.ScrollBarInset.None`;
+        case ScrollBarInset.scrollBar:
+            return `Enum.ScrollBarInset.ScrollBar`;  
+        case ScrollBarInset.always:
+            return `Enum.ScrollBarInset.Always`; 
+        // ScrollingDirection
+        case ScrollingDirection.x:
+            return `Enum.ScrollingDirection.X`;
+        case ScrollingDirection.y:
+            return `Enum.ScrollingDirection.Y`;  
+        case ScrollingDirection.xy:
+            return `Enum.ScrollingDirection.XY`;   
+        // VerticalScrollBarPosition
+        case VerticalScrollBarPosition.left:
+            return `Enum.VerticalScrollBarPosition.Left`;  
+        case VerticalScrollBarPosition.right:
+            return `Enum.VerticalScrollBarPosition.Right`; 
+        // FieldOfViewMode
+        case FieldOfViewMode.vertical:
+            return `Enum.FieldOfViewMode.Vertical`;
+        case FieldOfViewMode.diagonal:
+            return `Enum.FieldOfViewMode.Diagonal`;  
+        case FieldOfViewMode.maxAxis:
+            return `Enum.FieldOfViewMode.MaxAxis`;
+        // ResamplerMode
+        case ResamplerMode.default:
+            return `Enum.ResamplerMode.Default`;  
+        case ResamplerMode.pixelated:
+            return `Enum.ResamplerMode.Pixelated`;
+        //    
+        default: throw new Error();
+    }
 }
 
 //
@@ -521,6 +755,104 @@ abstract class GuiBase2d extends GuiBase {
         ${variableName}.SelectionBehaviorUp = ${this.selectionBehaviorUp}
         ${variableName}.SelectionGroup = ${this.selectionGroup}
         `;
+    }
+}
+
+abstract class LayerCollector extends GuiBase2d {
+    enabled: boolean;
+    resetOnSpawn: boolean;
+    zIndexBehavior: ZIndexBehaviour;
+
+    constructor(params: {
+        archivable?: boolean,
+        name?: string,
+        parent?: Instance,
+        //
+        autoLocalize?: boolean,
+        rootLocalizationTable?: LocalizationTable,
+        selectionBehaviorDown?: SelectionBehavior,
+        selectionBehaviorLeft?: SelectionBehavior,
+        selectionBehaviorRight?: SelectionBehavior,
+        selectionBehaviorUp?: SelectionBehavior,
+        selectionGroup?: boolean,
+        //
+        enabled?: boolean,
+        resetOnSpawn?: boolean,
+        zIndexBehavior?: ZIndexBehaviour,
+    }) {
+        super({
+            archivable: params.archivable,
+            name: params.name,
+            parent: params.parent,
+            //
+            autoLocalize: params.autoLocalize,
+            rootLocalizationTable: params.rootLocalizationTable,
+            selectionBehaviorDown: params.selectionBehaviorDown,
+            selectionBehaviorLeft: params.selectionBehaviorLeft,
+            selectionBehaviorRight: params.selectionBehaviorRight,
+            selectionBehaviorUp: params.selectionBehaviorUp,
+            selectionGroup: params.selectionGroup,
+        });
+        this.enabled = params.enabled ?? true;
+        this.resetOnSpawn = params.resetOnSpawn ?? true;
+        this.zIndexBehavior = params.zIndexBehavior ?? ZIndexBehaviour.sibling;
+    }
+}
+
+export declare type ScreenGuiProperties = {
+    archivable?: boolean,
+    name?: string,
+    parent?: Instance,
+    //
+    autoLocalize?: boolean,
+    rootLocalizationTable?: LocalizationTable,
+    selectionBehaviorDown?: SelectionBehavior,
+    selectionBehaviorLeft?: SelectionBehavior,
+    selectionBehaviorRight?: SelectionBehavior,
+    selectionBehaviorUp?: SelectionBehavior,
+    selectionGroup?: boolean,
+    //
+    enabled?: boolean,
+    resetOnSpawn?: boolean,
+    zIndexBehavior?: ZIndexBehaviour,
+    //
+    clipToDeviceSafeArea?: boolean,
+    displayOrder?: number,
+    ignoreGuiInset?: boolean,
+    safeAreaCompatibility?: SafeAreaCompatibility,
+    screenInsets?: ScreenInsets,
+};
+
+export class ScreenGui extends LayerCollector {
+    clipToDeviceSafeArea: boolean;
+    displayOrder: number;
+    ignoreGuiInset: boolean;
+    safeAreaCompatibility: SafeAreaCompatibility;
+    screenInsets: ScreenInsets;
+
+    constructor(params: ScreenGuiProperties) {
+        super({
+            archivable: params.archivable,
+            name: params.name,
+            parent: params.parent,
+            //
+            autoLocalize: params.autoLocalize,
+            rootLocalizationTable: params.rootLocalizationTable,
+            selectionBehaviorDown: params.selectionBehaviorDown,
+            selectionBehaviorLeft: params.selectionBehaviorLeft,
+            selectionBehaviorRight: params.selectionBehaviorRight,
+            selectionBehaviorUp: params.selectionBehaviorUp,
+            selectionGroup: params.selectionGroup,
+            //
+            enabled: params.enabled,
+            resetOnSpawn: params.resetOnSpawn,
+            zIndexBehavior: params.zIndexBehavior,
+        });
+        this.clipToDeviceSafeArea = params.clipToDeviceSafeArea ?? true;
+        this.displayOrder = params.displayOrder ?? 0;
+        this.ignoreGuiInset = params.ignoreGuiInset ?? false;
+        this.safeAreaCompatibility = params.safeAreaCompatibility ?? SafeAreaCompatibility.fullscreenExtension;
+        this.screenInsets = params.screenInsets ?? ScreenInsets.coreUISafeInsets;
     }
 }
 

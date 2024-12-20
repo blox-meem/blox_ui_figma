@@ -527,6 +527,7 @@ declare type FigmaObjectParameters<OBJECTTYPE> = {
         effects?: Effects,
 };
 
+export class FigmaRectangle extends FigmaObject<RectangleType> {
     constructor(params: FigmaObjectParameters<RectangleType>) {
         super({
             figmaObjectType: params.figmaObjectType,

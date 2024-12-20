@@ -486,9 +486,8 @@ abstract class FigmaObject<OBJECTTYPE> implements RadiusObject, VisibleObject, P
 
 declare type RectangleType = "FRAME" | "SCROLLINGFRAME" | "VIEWPORTFRAME";
 
-export class FigmaRectangle extends FigmaObject<RectangleType> {
-    constructor(params: {
-        figmaObjectType: RectangleType,
+declare type FigmaObjectParameters<OBJECTTYPE> = {
+        figmaObjectType: OBJECTTYPE,
 
         cornerRadius?: number | undefined,
         topLeftRadius?: number,
@@ -526,7 +525,9 @@ export class FigmaRectangle extends FigmaObject<RectangleType> {
         vertical?: ConstraintType,
 
         effects?: Effects,
-    }) {
+};
+
+    constructor(params: FigmaObjectParameters<RectangleType>) {
         super({
             figmaObjectType: params.figmaObjectType,
             cornerRadius: params.cornerRadius,
@@ -571,46 +572,7 @@ export class FigmaRectangle extends FigmaObject<RectangleType> {
 declare type EllipseType = "FRAME" | "TEXTBUTTON";
 
 export class FigmaEllipse extends FigmaObject<EllipseType> {
-    constructor(params: {
-        figmaObjectType: EllipseType,
-
-        cornerRadius?: number | undefined,
-        topLeftRadius?: number,
-        topRightRadius?: number,
-        bottomLeftRadius?: number,
-        bottomRightRadius?: number,
-
-        visible?: boolean,
-        opacity?: number,
-        
-        x?: number,
-        y?: number,
-        
-        width?: number,
-        height?: number,
-        minWidth?: number,
-        maxWidth?: number,
-        minHeight?: number,
-        maxHeight?: number,
-        
-        fills?: Colors,
-        
-        strokes?: Colors,
-        strokeWeight?: number,
-        strokeTopWeight?: number,
-        strokeBottomWeight?: number,
-        strokeLeftWeight?: number,
-        strokeRightWeight?: number,
-        strokeJoin?: StrokeJoin,
-        strokeAlign?: "CENTER" | "INSIDE" | "OUTSIDE",
-        
-        rotation?: number,
-        
-        horizontal?: ConstraintType,
-        vertical?: ConstraintType,
-
-        effects?: Effects,
-    }) {
+    constructor(params: FigmaObjectParameters<EllipseType>) {
         super({
             figmaObjectType: params.figmaObjectType,
 
@@ -752,6 +714,53 @@ interface TextObject {
     hasMissinFont(fontName: FontName): Promise<boolean>;
 }
 
+declare type FigmaTextParameters = {
+    figmaObjectType: TextType,
+
+    alignment?: Alignment,
+    autoResize?: TextAutoResize,
+    text?: string,
+    font?: FigmaFont,
+    textStyle?: TextStyle,
+
+    cornerRadius?: number | undefined,
+    topLeftRadius?: number | undefined,
+    topRightRadius?: number | undefined,
+    bottomLeftRadius?: number | undefined,
+    bottomRightRadius?: number | undefined,
+
+    visible?: boolean,
+    opacity?: number,
+    
+    x?: number,
+    y?: number,
+    
+    width?: number,
+    height?: number,
+    minWidth?: number,
+    maxWidth?: number,
+    minHeight?: number,
+    maxHeight?: number,
+    
+    fills?: Colors,
+    
+    strokes?: Colors,
+    strokeWeight?: number | undefined,
+    strokeTopWeight?: number | undefined,
+    strokeBottomWeight?: number | undefined,
+    strokeLeftWeight?: number | undefined,
+    strokeRightWeight?: number | undefined,
+    strokeJoin?: StrokeJoin,
+    strokeAlign?: "CENTER" | "INSIDE" | "OUTSIDE",
+    
+    rotation?: number,
+    
+    horizontal?: ConstraintType,
+    vertical?: ConstraintType,
+
+    effects?: Effects,   
+};
+
 export class FigmaText extends FigmaObject<TextType> implements TextObject {
     alignment: Alignment;
     autoResize: TextAutoResize;
@@ -759,52 +768,7 @@ export class FigmaText extends FigmaObject<TextType> implements TextObject {
     font: FigmaFont;
     textStyle: TextStyle;
     
-    constructor(params: {
-        figmaObjectType: TextType,
-
-        alignment?: Alignment,
-        autoResize?: TextAutoResize,
-        text?: string,
-        font?: FigmaFont,
-        textStyle?: TextStyle,
-
-        cornerRadius?: number | undefined,
-        topLeftRadius?: number | undefined,
-        topRightRadius?: number | undefined,
-        bottomLeftRadius?: number | undefined,
-        bottomRightRadius?: number | undefined,
-
-        visible?: boolean,
-        opacity?: number,
-        
-        x?: number,
-        y?: number,
-        
-        width?: number,
-        height?: number,
-        minWidth?: number,
-        maxWidth?: number,
-        minHeight?: number,
-        maxHeight?: number,
-        
-        fills?: Colors,
-        
-        strokes?: Colors,
-        strokeWeight?: number | undefined,
-        strokeTopWeight?: number | undefined,
-        strokeBottomWeight?: number | undefined,
-        strokeLeftWeight?: number | undefined,
-        strokeRightWeight?: number | undefined,
-        strokeJoin?: StrokeJoin,
-        strokeAlign?: "CENTER" | "INSIDE" | "OUTSIDE",
-        
-        rotation?: number,
-        
-        horizontal?: ConstraintType,
-        vertical?: ConstraintType,
-
-        effects?: Effects,
-    }) {
+    constructor(params: FigmaTextParameters) {
         super({
             figmaObjectType: params.figmaObjectType,
 
@@ -862,57 +826,59 @@ interface ImageObject {
     hash: string;
 }
 
+declare type FigmaObjectAssetParameters<OBJECTTYPE> = {
+    hash?: string;
+
+    figmaObjectType: OBJECTTYPE,
+
+    alignment?: Alignment,
+    autoResize?: TextAutoResize,
+    text?: string,
+    font?: FigmaFont,
+    textStyle?: TextStyle,
+
+    cornerRadius?: number | undefined,
+    topLeftRadius?: number | undefined,
+    topRightRadius?: number | undefined,
+    bottomLeftRadius?: number | undefined,
+    bottomRightRadius?: number | undefined,
+
+    visible?: boolean,
+    opacity?: number,
+    
+    x?: number,
+    y?: number,
+    
+    width?: number,
+    height?: number,
+    minWidth?: number,
+    maxWidth?: number,
+    minHeight?: number,
+    maxHeight?: number,
+    
+    fills?: Colors,
+    
+    strokes?: Colors,
+    strokeWeight?: number | undefined,
+    strokeTopWeight?: number | undefined,
+    strokeBottomWeight?: number | undefined,
+    strokeLeftWeight?: number | undefined,
+    strokeRightWeight?: number | undefined,
+    strokeJoin?: StrokeJoin,
+    strokeAlign?: "CENTER" | "INSIDE" | "OUTSIDE",
+    
+    rotation?: number,
+    
+    horizontal?: ConstraintType,
+    vertical?: ConstraintType,
+
+    effects?: Effects,
+};
+
 export class FigmaImage extends FigmaObject<ImageType> implements ImageObject {
     hash: string;
 
-    constructor(params: {
-        hash?: string;
-
-        figmaObjectType: ImageType,
-
-        alignment?: Alignment,
-        autoResize?: TextAutoResize,
-        text?: string,
-        font?: FigmaFont,
-        textStyle?: TextStyle,
-
-        cornerRadius?: number | undefined,
-        topLeftRadius?: number | undefined,
-        topRightRadius?: number | undefined,
-        bottomLeftRadius?: number | undefined,
-        bottomRightRadius?: number | undefined,
-
-        visible?: boolean,
-        opacity?: number,
-        
-        x?: number,
-        y?: number,
-        
-        width?: number,
-        height?: number,
-        minWidth?: number,
-        maxWidth?: number,
-        minHeight?: number,
-        maxHeight?: number,
-        
-        fills?: Colors,
-        
-        strokes?: Colors,
-        strokeWeight?: number | undefined,
-        strokeTopWeight?: number | undefined,
-        strokeBottomWeight?: number | undefined,
-        strokeLeftWeight?: number | undefined,
-        strokeRightWeight?: number | undefined,
-        strokeJoin?: StrokeJoin,
-        strokeAlign?: "CENTER" | "INSIDE" | "OUTSIDE",
-        
-        rotation?: number,
-        
-        horizontal?: ConstraintType,
-        vertical?: ConstraintType,
-
-        effects?: Effects,
-    }) {
+    constructor(params: FigmaObjectAssetParameters<ImageType>) {
         super({
             figmaObjectType: params.figmaObjectType,
 
@@ -977,54 +943,7 @@ interface VideoObject {
 export class FigmaVideo extends FigmaObject<VideoType> implements VideoObject {
     hash: string;
 
-    constructor(params: {
-        hash?: string;
-
-        figmaObjectType: VideoType,
-
-        alignment?: Alignment,
-        autoResize?: TextAutoResize,
-        text?: string,
-        font?: FigmaFont,
-        textStyle?: TextStyle,
-
-        cornerRadius?: number | undefined,
-        topLeftRadius?: number | undefined,
-        topRightRadius?: number | undefined,
-        bottomLeftRadius?: number | undefined,
-        bottomRightRadius?: number | undefined,
-
-        visible?: boolean,
-        opacity?: number,
-        
-        x?: number,
-        y?: number,
-        
-        width?: number,
-        height?: number,
-        minWidth?: number,
-        maxWidth?: number,
-        minHeight?: number,
-        maxHeight?: number,
-        
-        fills?: Colors,
-        
-        strokes?: Colors,
-        strokeWeight?: number | undefined,
-        strokeTopWeight?: number | undefined,
-        strokeBottomWeight?: number | undefined,
-        strokeLeftWeight?: number | undefined,
-        strokeRightWeight?: number | undefined,
-        strokeJoin?: StrokeJoin,
-        strokeAlign?: "CENTER" | "INSIDE" | "OUTSIDE",
-        
-        rotation?: number,
-        
-        horizontal?: ConstraintType,
-        vertical?: ConstraintType,
-
-        effects?: Effects,
-    }) {
+    constructor(params: FigmaObjectAssetParameters<VideoType>) {
         super({
             figmaObjectType: "VIDEOFRAME",
 
@@ -1067,7 +986,6 @@ export class FigmaVideo extends FigmaObject<VideoType> implements VideoObject {
         });
         this.hash = params.hash ?? "";
     }
-    
 }
 
 //

@@ -1,5 +1,4 @@
 import { assert } from "console";
-import { off } from "process";
 
 abstract class RobloxObject {}
 
@@ -25,16 +24,36 @@ export abstract class Instance extends RobloxObject implements RobloxCodeParser{
 
     toCode(variableName: string): string {
         return `
-        local ${variableName}: Instance = Instance.new();
         ${variableName}.Archivable = ${this.archivable}
-        ${variableName}.Name = ${this.name}
-        ${variableName}.Parent = ${this.parent?.toCode ?? "nil"}
+        ${variableName}.Name = "${this.name}"
+        ${variableName}.Parent = ${this.parent?.toCode(variableName) ?? "nil"}
         `.trim();
     }
 }
 
-export class LocalizationTable {
-    constructor() {}
+export class LocalizationTable extends Instance {
+    sourceLocaleId: string;
+
+    constructor(params: {
+        archivable?: boolean,
+        name?: string,
+        parent?: Instance,
+        //
+        sourceLocaleId?: string,
+    }) {
+        super({
+            archivable: params.archivable,
+            name: params.name,
+            parent: params.parent,
+        });
+        this.sourceLocaleId = params.sourceLocaleId ?? "en-us";
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.SourceLocaleId ? "${this.sourceLocaleId}"
+        `;
+    }
 }
 
 export enum SelectionBehavior {
@@ -90,7 +109,9 @@ export enum AutomaticSize {
 }
 
 export enum BorderMode {
-    inset, middle, outline
+    inset,
+    middle, 
+    outline
 }
 
 export class UDim implements RobloxGlobalObject {
@@ -169,7 +190,7 @@ export enum VerticalScrollBarPosition {
     left
 }
 
-export class CFrame {
+export class CFrame implements RobloxGlobalObject {
     identity?: CFrame;
     position?: Vector3;
     rotation?: CFrame;
@@ -184,6 +205,9 @@ export class CFrame {
     zVector?: Vector3;
 
     constructor() {}
+    toCode(): string {
+        return `CFrame.new(${this.x}, ${this.y}, ${this.z})`;
+    }
 }
 
 export enum FieldOfViewMode {
@@ -240,9 +264,9 @@ export class Camera extends Instance {
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
         ${variableName}.CFrame = ${this.cframe.toCode()}
-        ${variableName}.CameraSubject = ${this.cameraSubject?.toCode() ?? "nil"}
-        ${variableName}.DiagonalFieldOfView = ${this.diagonalFieldOfView.toCode()}
-        ${variableName}.FieldOfView = ${this.fieldOfView.toCode()}
+        ${variableName}.CameraSubject = ${this.cameraSubject?.toCode(variableName) ?? "nil"}
+        ${variableName}.DiagonalFieldOfView = ${this.diagonalFieldOfView}
+        ${variableName}.FieldOfView = ${this.fieldOfView}
         ${variableName}.FieldOfViewMode = ${toCode(this.fieldOfViewMode)}
         ${variableName}.Focus = ${this.focus.toCode()}
         ${variableName}.HeadLocked = ${this.headLocked}
@@ -295,7 +319,7 @@ export class Rect implements RobloxGlobalObject {
     }
 
     toCode(): string {
-        return `Rect.new(${this.min}, ${this.max})`;
+        return `Rect.new(${this.min.toCode()}, ${this.max.toCode()})`;
     }
 }
 
@@ -334,7 +358,7 @@ export class Font implements RobloxGlobalObject {
         this.style = style;
     }
     toCode(): string {
-        return `Font.new(${this.family}, ${this.weight}, ${this.style})`;
+        return `Font.new("${this.family}", ${toCode(this.weight)}, ${toCode(this.style)})`;
     }
 }
 
@@ -378,7 +402,7 @@ export enum ItemLineAlignment {
     start,
     center,
     end,
-    scretch
+    stretch,
 }
 
 export class ColorSequenceKeypoint implements RobloxGlobalObject {
@@ -533,7 +557,7 @@ export enum ScreenInsets {
     none,
     deviceSafeInsets,
     coreUISafeInsets,
-    topBarSafeInsets,
+    topbarSafeInsets,
 }
 
 declare type RobloxEnumerations = 
@@ -672,8 +696,212 @@ export function toCode(enumeration: RobloxEnumerations): string {
             return `Enum.ResamplerMode.Default`;  
         case ResamplerMode.pixelated:
             return `Enum.ResamplerMode.Pixelated`;
-        //    
-        default: throw new Error();
+        // ScaleType
+        case ScaleType.stretch:
+            return `Enum.ScaleType.Stretch`;
+        case ScaleType.slice:
+            return `Enum.ScaleType.Slice`;
+        case ScaleType.tile:
+            return `Enum.ScaleType.Tile`;
+        case ScaleType.fit:
+            return `Enum.ScaleType.Fit`;
+        case ScaleType.crop:
+            return `Enum.ScaleType.Crop`;
+        // TextDirection
+        case TextDirection.auto:
+            return `Enum.TextDirection.Auto`;
+        case TextDirection.leftToRight:
+            return `Enum.TextDirection.LeftToRight`;
+        case TextDirection.rightToLeft:
+            return `Enum.TextDirection.RightToLeft`;
+        // TextTruncate
+        case TextTruncate.none:
+            return `Enum.TextTruncate.None`;
+        case TextTruncate.atEnd:
+            return `Enum.TextTruncate.AtEnd`;
+        case TextTruncate.splitWord:
+            return `Enum.TextTruncate.SplitWord`; 
+        // TextXAlignment
+        case TextXAlignment.left:
+            return `Enum.TextXAlignment.Left`;
+        case TextXAlignment.right:
+            return `Enum.TextXAlignment.Right`;
+        case TextXAlignment.center:
+            return `Enum.TextXAlignment.Center`;
+        // TextYAlignment
+        case TextYAlignment.top:
+            return `Enum.TextYAlignment.Top`;
+        case TextYAlignment.center:
+            return `Enum.TextYAlignment.Center`;
+        case TextYAlignment.bottom:
+            return `Enum.TextYAlignment.Bottom`;
+        // FontWeight
+        case FontWeight.thin:
+            return `Enum.FontWeight.Thin`;
+        case FontWeight.extraLight:
+            return `Enum.FontWeight.ExtraLight`;
+        case FontWeight.light:
+            return `Enum.FontWeight.Light`;
+        case FontWeight.regular:
+            return `Enum.FontWeight.Regular`;
+        case FontWeight.medium:
+            return `Enum.FontWeight.Medium`;
+        case FontWeight.semiBold:
+            return `Enum.FontWeight.SemiBold`;
+        case FontWeight.bold:
+            return `Enum.FontWeight.Bold`;
+        case FontWeight.extraBold:
+            return `Enum.FontWeight.ExtraBold`;
+        case FontWeight.heavy:
+            return `Enum.FontWeight.Heavy`; 
+        // FontStyle
+        case FontStyle.normal:
+            return `Enum.FontStyle.Normal`;
+        case FontStyle.italic:
+            return `Enum.FontStyle.Italic`;
+        // AspectType
+        case AspectType.fitWithInMaxSize:
+            return `Enum.AspectType.FitWithinMaxSize`;
+        case AspectType.scaleWithParentSize:
+            return `Enum.AspectType.ScaleWithParentSize`;
+        // DominantAxis
+        case DominantAxis.width:
+            return `Enum.DominantAxis.Width`;
+        case DominantAxis.height:
+            return `Enum.DominantAxis.Height`;
+        // UIFlexMode
+        case UIFlexMode.none:
+            return `Enum.UIFlexMode.None`;
+        case UIFlexMode.shrink:
+            return `Enum.UIFlexMode.Shrink`;
+        case UIFlexMode.fill:
+            return `Enum.DominantAxis.Fill`;
+        case UIFlexMode.custom:
+            return `Enum.UIFlexMode.Custom`;
+        // ItemLineAlignment
+        case ItemLineAlignment.automatic:
+            return `Enum.ItemLineAlignment.Automatic`;
+        case ItemLineAlignment.start:
+            return `Enum.ItemLineAlignment.Start`;
+        case ItemLineAlignment.center:
+            return `Enum.ItemLineAlignment.Center`;
+        case ItemLineAlignment.end:
+            return `Enum.ItemLineAlignment.End`;
+        case ItemLineAlignment.stretch:
+            return `Enum.ItemLineAlignment.Stretch`;   
+        // StartCorner
+        case StartCorner.topLeft:
+            return `Enum.StartCorner.TopLeft`;
+        case StartCorner.topRight:
+            return `Enum.StartCorner.topRight`;
+        case StartCorner.bottomLeft:
+            return `Enum.StartCorner.bottomLeft`;
+        case StartCorner.bottomRight:
+            return `Enum.StartCorner.BottomRight`;
+        // FillDirection
+        case FillDirection.horizontal:
+            return `Enum.FillDirection.Horizontal`;
+        case FillDirection.vertical:
+            return `Enum.FillDirection.Vertical`; 
+        // HorizontalAlignment
+        case HorizontalAlignment.center:
+            return `Enum.HorizontalAlignment.Center`;
+        case HorizontalAlignment.left:
+            return `Enum.HorizontalAlignment.Left`;
+        case HorizontalAlignment.right:
+            return `Enum.HorizontalAlignment.Right`;
+        // SortOrder
+        case SortOrder.name:
+            return `Enum.SortOrder.Name`;
+        case SortOrder.layoutOrder:
+            return `Enum.SortOrder.LayoutOrder`;
+        // VerticalAlignment
+        case VerticalAlignment.center:
+            return `Enum.VerticalAlignment.Center`;
+        case VerticalAlignment.top:
+            return `Enum.VerticalAlignment.Top`;
+        case VerticalAlignment.bottom:
+            return `Enum.VerticalAlignment.Bottom`;
+        // UIFlexAlignment
+        case UIFlexAlignment.none:
+            return `Enum.UIFlexAlignment.None`;
+        case UIFlexAlignment.fill:
+            return `Enum.UIFlexAlignment.Fill`;
+        case UIFlexAlignment.spaceAround:
+            return `Enum.UIFlexAlignment.SpaceAround`;
+        case UIFlexAlignment.spaceBetween:
+            return `Enum.UIFlexAlignment.SpaceBetween`;
+        case UIFlexAlignment.spaceEvenly:
+            return `Enum.UIFlexAlignment.SpaceEvenly`;
+        // EasingDirection
+        case EasingDirection.in:
+            return `Enum.EasingDirection.In`;
+        case EasingDirection.out:
+            return `Enum.EasingDirection.Out`;
+        case EasingDirection.inOut:
+            return `Enum.EasingDirection.InOut`;
+        // EasingStyle
+        case EasingStyle.linear:
+            return `Enum.EasingStyle.Linear`;
+        case EasingStyle.sine:
+            return `Enum.EasingStyle.Sine`;
+        case EasingStyle.back:
+            return `Enum.EasingStyle.Back`;
+        case EasingStyle.quad:
+            return `Enum.EasingStyle.Quad`;
+        case EasingStyle.quart:
+            return `Enum.EasingStyle.Quart`;
+        case EasingStyle.quint:
+            return `Enum.EasingStyle.Quint`;
+        case EasingStyle.bounce:
+            return `Enum.EasingStyle.Bounce`;
+        case EasingStyle.elastic:
+            return `Enum.EasingStyle.Elastic`;
+        case EasingStyle.exponential:
+            return `Enum.EasingStyle.Exponential`;
+        case EasingStyle.circular:
+            return `Enum.EasingStyle.Circular`;
+        case EasingStyle.cubic:
+            return `Enum.EasingStyle.Cubic`;
+        // ApplyStrokeMode
+        case ApplyStrokeMode.contextual:
+            return `Enum.ApplyStrokeMode.Contextual`;
+        case ApplyStrokeMode.border:
+            return `Enum.ApplyStrokeMode.Border`; 
+        // LineJoinMode
+        case LineJoinMode.round:
+            return `Enum.LineJoinMode.Round`;
+        case LineJoinMode.bevel:
+            return `Enum.LineJoinMode.Bevel`;
+        case LineJoinMode.miter:
+            return `Enum.LineJoinMode.Miter`;
+        // TableMajorAxis
+        case TableMajorAxis.rowMajor:
+            return `Enum.TableMajorAxis.RowMajor`;
+        case TableMajorAxis.columnMajor:
+            return `Enum.TableMajorAxis.ColumnMajor`;
+        // ZIndexBehaviour
+        case ZIndexBehaviour.global:
+            return `Enum.ZIndexBehaviour.Global`;
+        case ZIndexBehaviour.sibling:
+            return `Enum.ZIndexBehaviour.Sibling`;
+        // SafeAreaCompatibility
+        case SafeAreaCompatibility.none:
+            return `Enum.SafeAreaCompatibility.None`;
+        case SafeAreaCompatibility.fullscreenExtension:
+            return `Enum.SafeAreaCompatibility.FullscreenExtension`;
+        // ScreenInsets
+        case ScreenInsets.none:
+            return `Enum.ScreenInsets.None`;
+        case ScreenInsets.deviceSafeInsets:
+            return `Enum.ScreenInsets.DeviceSafeInsets`;
+        case ScreenInsets.coreUISafeInsets:
+            return `Enum.ScreenInsets.CoreUISafeInsets`;
+        case ScreenInsets.topbarSafeInsets:
+            return `Enum.ScreenInsets.TopbarSafeInsets`;
+        default: throw new Error(
+            "Enumeration or enumeration value not implemented (yet)",
+        );
     }
 }
 
@@ -748,11 +976,11 @@ abstract class GuiBase2d extends GuiBase {
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
         ${variableName}.AutoLocalize = ${this.autoLocalize}
-        ${variableName}.RootLocalizationTable = ${this.rootLocalizationTable ?? 'nil'}
-        ${variableName}.SelectionBehaviorDown = ${this.selectionBehaviorDown}
-        ${variableName}.SelectionBehaviorLeft = ${this.selectionBehaviorLeft}
-        ${variableName}.SelectionBehaviorRight = ${this.selectionBehaviorRight}
-        ${variableName}.SelectionBehaviorUp = ${this.selectionBehaviorUp}
+        ${variableName}.RootLocalizationTable = ${this.rootLocalizationTable?.toCode(variableName) ?? 'nil'}
+        ${variableName}.SelectionBehaviorDown = ${toCode(this.selectionBehaviorDown)}
+        ${variableName}.SelectionBehaviorLeft = ${toCode(this.selectionBehaviorLeft)}
+        ${variableName}.SelectionBehaviorRight = ${toCode(this.selectionBehaviorRight)}
+        ${variableName}.SelectionBehaviorUp = ${toCode(this.selectionBehaviorUp)}
         ${variableName}.SelectionGroup = ${this.selectionGroup}
         `;
     }
@@ -796,6 +1024,14 @@ abstract class LayerCollector extends GuiBase2d {
         this.enabled = params.enabled ?? true;
         this.resetOnSpawn = params.resetOnSpawn ?? true;
         this.zIndexBehavior = params.zIndexBehavior ?? ZIndexBehaviour.sibling;
+    }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.Enabled = ${this.enabled}
+        ${variableName}.resetOnSpawn = ${this.resetOnSpawn}
+        ${variableName}.ZIndexBehavior = ${toCode(this.zIndexBehavior)}
+        `;
     }
 }
 
@@ -854,9 +1090,19 @@ export class ScreenGui extends LayerCollector {
         this.safeAreaCompatibility = params.safeAreaCompatibility ?? SafeAreaCompatibility.fullscreenExtension;
         this.screenInsets = params.screenInsets ?? ScreenInsets.coreUISafeInsets;
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.ClipToDeviceSafeArea = ${this.clipToDeviceSafeArea}
+        ${variableName}.DisplayOrder = ${this.displayOrder}
+        ${variableName}.IgnoreGuiInset = ${this.ignoreGuiInset}
+        ${variableName}.SafeAreaCompatibility = ${toCode(this.safeAreaCompatibility)}
+        ${variableName}.ScreenInsets = ${toCode(this.screenInsets)}
+        `;
+    }
 }
 
-abstract class GuiBase3d extends GuiBase {
+export abstract class GuiBase3d extends GuiBase {
     color3: Color3;
     transparency: number;
     visible: boolean;
@@ -882,9 +1128,9 @@ abstract class GuiBase3d extends GuiBase {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.Color3 = ${this.color3}
+        ${variableName}.Color3 = ${this.color3.toCode()}
         ${variableName}.Transparency = ${this.transparency}
-        ${variableName}.Visible = ${this.visible} 
+        ${variableName}.Visible = ${this.visible}
         `;
     }
 }
@@ -995,27 +1241,27 @@ abstract class GuiObject extends GuiBase2d {
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
         ${variableName}.Active = ${this.active}
-        ${variableName}.AnchorPoint = ${this.anchorPoint}
-        ${variableName}.AutomaticSize = ${this.automaticSize}
-        ${variableName}.BackgroundColor = ${this.backgroundColor}
+        ${variableName}.AnchorPoint = ${this.anchorPoint.toCode()}
+        ${variableName}.AutomaticSize = ${toCode(this.automaticSize)}
+        ${variableName}.BackgroundColor = ${this.backgroundColor.toCode()}
         ${variableName}.BackgroundTransparency = ${this.backgroundTransparency}
-        ${variableName}.BorderColor3 = ${this.borderColor3}
-        ${variableName}.BorderMode = ${this.borderMode}
+        ${variableName}.BorderColor3 = ${this.borderColor3.toCode()}
+        ${variableName}.BorderMode = ${toCode(this.borderMode)}
         ${variableName}.BorderSizePixel = ${this.borderSizePixel}
         ${variableName}.ClipDescendants = ${this.clipDescendants}
         ${variableName}.Interactable = ${this.interactable}
         ${variableName}.LayoutOrder = ${this.layoutOrder}
-        ${variableName}.NextSelectionDown = ${this.nextSelectionDown}
-        ${variableName}.NextSelectionLeft = ${this.nextSelectionLeft}
-        ${variableName}.NextSelectionRight = ${this.nextSelectionRight}
-        ${variableName}.NextSelectionUp = ${this.nextSelectionUp}
-        ${variableName}.Position = ${this.position}
+        ${variableName}.NextSelectionDown = ${this.nextSelectionDown?.toCode(variableName) ?? "nil"}
+        ${variableName}.NextSelectionLeft = ${this.nextSelectionLeft?.toCode(variableName) ?? "nil"}
+        ${variableName}.NextSelectionRight = ${this.nextSelectionRight?.toCode(variableName) ?? "nil"}
+        ${variableName}.NextSelectionUp = ${this.nextSelectionUp?.toCode(variableName) ?? "nil"}
+        ${variableName}.Position = ${this.position.toCode()}
         ${variableName}.Rotation = ${this.rotation}
         ${variableName}.Selectable = ${this.selectable}
-        ${variableName}.SelectionImageObject = ${this.selectionImageObject}
+        ${variableName}.SelectionImageObject = ${this.selectionImageObject?.toCode(variableName) ?? "nil"}
         ${variableName}.SelectionOrder = ${this.selectionOrder}
-        ${variableName}.Size = ${this.size}
-        ${variableName}.SizeConstraint = ${this.sizeConstraint}
+        ${variableName}.Size = ${this.size.toCode()}
+        ${variableName}.SizeConstraint = ${toCode(this.sizeConstraint)}
         ${variableName}.Visible = ${this.visible}
         ${variableName}.ZIndex = ${this.zIndex}
         `;
@@ -1120,7 +1366,7 @@ abstract class GuiButton extends GuiObject {
         ${variableName}.AutoButtonColor = ${this.autoButtonColor}
         ${variableName}.Modal = ${this.modal}
         ${variableName}.Selected = ${this.selected}
-        ${variableName}.Style = ${this.style}
+        ${variableName}.Style = ${toCode(this.style)}
         `;
     }
 }
@@ -1211,7 +1457,7 @@ export class Frame extends GuiObject {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.Style = ${this.style}
+        ${variableName}.Style = ${toCode(this.style)}
         `;
     }
 }
@@ -1344,21 +1590,21 @@ export class ScrollingFrame extends GuiObject {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.AutomaticCanvasSize = ${this.automaticCanvasSize}
-        ${variableName}.BottomImage = ${this.bottomImage}
-        ${variableName}.CanvasPosition = ${this.canvasPosition}
-        ${variableName}.CanvasSize = ${this.canvasSize}
-        ${variableName}.ElasticBehavior = ${this.elasticBehavior}
-        ${variableName}.HorizontalScrollBarInset = ${this.horizontalScrollBarInset}
-        ${variableName}.MidImage = ${this.midImage}
-        ${variableName}.ScrollBarImageColor3 = ${this.scrollBarImageColor3}
+        ${variableName}.AutomaticCanvasSize = ${toCode(this.automaticCanvasSize)}
+        ${variableName}.BottomImage = "${this.bottomImage}"
+        ${variableName}.CanvasPosition = ${this.canvasPosition.toCode()}
+        ${variableName}.CanvasSize = ${this.canvasSize.toCode()}
+        ${variableName}.ElasticBehavior = ${toCode(this.elasticBehavior)}
+        ${variableName}.HorizontalScrollBarInset = ${toCode(this.horizontalScrollBarInset)}
+        ${variableName}.MidImage = "${this.midImage}"
+        ${variableName}.ScrollBarImageColor3 = ${this.scrollBarImageColor3.toCode}
         ${variableName}.ScrollBarImageTransparency = ${this.scrollBarImageTransparency}
         ${variableName}.ScrollBarThickness = ${this.scrollBarThickness}
-        ${variableName}.ScrollingDirection = ${this.scrollingDirection}
+        ${variableName}.ScrollingDirection = ${toCode(this.scrollingDirection)}
         ${variableName}.ScrollingEnabled = ${this.scrollingEnabled}
-        ${variableName}.TopImage = ${this.topImage}
-        ${variableName}.VerticalScrollBarInset = ${this.verticalScrollBarInset}
-        ${variableName}.VerticalScrollBarPosition = ${this.verticalScrollBarPosition}
+        ${variableName}.TopImage = "${this.topImage}"
+        ${variableName}.VerticalScrollBarInset = ${toCode(this.verticalScrollBarInset)}
+        ${variableName}.VerticalScrollBarPosition = ${toCode(this.verticalScrollBarPosition)}
         `;
     }
 }
@@ -1464,7 +1710,7 @@ export class VideoFrame extends GuiObject {
         ${variableName}.Looped = ${this.looped}
         ${variableName}.Playing = ${this.playing}
         ${variableName}.TimePosition = ${this.timePosition}
-        ${variableName}.Looped = ${this.video ?? ''}
+        ${variableName}.Looped = "${this.video ?? ''}"
         ${variableName}.Volume = ${this.volume}
         `;
     }
@@ -1571,12 +1817,12 @@ export class ViewportFrame extends GuiObject {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.Ambient = ${this.ambient}
-        ${variableName}.CurrentCamera = ${this.currentCamera}
-        ${variableName}.ImageColor3 = ${this.imageColor3}
+        ${variableName}.Ambient = ${this.ambient.toCode()}
+        ${variableName}.CurrentCamera = ${this.currentCamera?.toCode(variableName) ?? "nil"}
+        ${variableName}.ImageColor3 = ${this.imageColor3.toCode()}
         ${variableName}.ImageTransparency = ${this.imageTransparency}
-        ${variableName}.LightColor = ${this.lightColor}
-        ${variableName}.LightDirection = ${this.lightDirection}
+        ${variableName}.LightColor = ${this.lightColor.toCode()}
+        ${variableName}.LightDirection = ${this.lightDirection.toCode()}
         `;
     }
 }
@@ -1694,16 +1940,16 @@ abstract class ImageObject extends GuiObject {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.Image = ${this.image}
-        ${variableName}.ImageColor3 = ${this.imageColor3}
-        ${variableName}.ImageRectOffset = ${this.imageRectOffset}
-        ${variableName}.ImageRectSize = ${this.imageRectSize}
+        ${variableName}.Image = "${this.image}"
+        ${variableName}.ImageColor3 = ${this.imageColor3.toCode()}
+        ${variableName}.ImageRectOffset = ${this.imageRectOffset.toCode()}
+        ${variableName}.ImageRectSize = ${this.imageRectSize.toCode()}
         ${variableName}.ImageTransparency = ${this.imageTransparency}
-        ${variableName}.ResampleMode = ${this.resampleMode}
-        ${variableName}.ScaleType = ${this.scaleType}
-        ${variableName}.SliceCenter = ${this.sliceCenter}
+        ${variableName}.ResampleMode = ${toCode(this.resampleMode)}
+        ${variableName}.ScaleType = ${toCode(this.scaleType)}
+        ${variableName}.SliceCenter = ${this.sliceCenter.toCode()}
         ${variableName}.SliceScale = ${this.sliceScale}
-        ${variableName}.TileSize = ${this.tileSize}
+        ${variableName}.TileSize = ${this.tileSize.toCode()}
         `;
     }
 }
@@ -1935,8 +2181,12 @@ export class ImageButton extends ImageObject implements GuiButton {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.HoverImage = ${this.hoverImage}
-        ${variableName}.PressedImage = ${this.pressedImage}
+        ${variableName}.AutoButtonColor = ${this.autoButtonColor}
+        ${variableName}.Modal = ${this.modal}
+        ${variableName}.Selected = ${this.selected}
+        ${variableName}.Style = ${toCode(this.style)}
+        ${variableName}.HoverImage = "${this.hoverImage ?? ""}"
+        ${variableName}.PressedImage = "${this.pressedImage ?? ""}"
         `;
     }
 }
@@ -2075,23 +2325,23 @@ abstract class TextObject extends GuiObject {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.FontFace = ${this.fontFace}
+        ${variableName}.FontFace = ${this.fontFace.toCode()}
         ${variableName}.LineHeight = ${this.lineHeight}
         ${variableName}.MaxVisibleGraphemes = ${this.maxVisibleGraphemes}
-        ${variableName}.OpenTypeFeatures = ${this.openTypeFeatures}
+        ${variableName}.OpenTypeFeatures = "${this.openTypeFeatures ?? "nil"}"
         ${variableName}.RichText = ${this.richText}
-        ${variableName}.Text = ${this.text}
-        ${variableName}.TextColor = ${this.textColor}
-        ${variableName}.TextDirection = ${this.textDirection}
+        ${variableName}.Text = "${this.text}"
+        ${variableName}.TextColor = ${this.textColor.toCode()}
+        ${variableName}.TextDirection = ${toCode(this.textDirection)}
         ${variableName}.TextScaled = ${this.textScaled}
         ${variableName}.TextSize = ${this.textSize}
-        ${variableName}.TextStrokeColor = ${this.textStrokeColor}
+        ${variableName}.TextStrokeColor = ${this.textStrokeColor.toCode()}
         ${variableName}.TextStrokeTransparency = ${this.textStrokeTransparency}
         ${variableName}.TextTransparency = ${this.textTransparency}
-        ${variableName}.TextTruncate = ${this.textTruncate}
+        ${variableName}.TextTruncate = ${toCode(this.textTruncate)}
         ${variableName}.TextWrapped = ${this.textWrapped}
-        ${variableName}.TextXAlignment = ${this.textXAlignment}
-        ${variableName}.TextYAlignment = ${this.textYAlignment}
+        ${variableName}.TextXAlignment = ${toCode(this.textXAlignment)}
+        ${variableName}.TextYAlignment = ${toCode(this.textYAlignment)}
         `;
     }
 }
@@ -2340,6 +2590,15 @@ export class TextButton extends TextObject implements GuiButton {
         this.selected = params.selected ?? false;
         this.style = params.style ?? ButtonStyle.custom;
     }
+
+    toCode(variableName: string): string {
+        return super.toCode(variableName) + `
+        ${variableName}.AutoButtonColor = ${this.autoButtonColor}
+        ${variableName}.Modal = ${this.modal}
+        ${variableName}.Selected = ${this.selected}
+        ${variableName}.Style = ${toCode(this.style)}
+        `;
+    }
 }
 
 export class TextBox extends TextObject {
@@ -2489,8 +2748,8 @@ export class TextBox extends TextObject {
         ${variableName}.ClearTextFocus = ${this.clearTextFocus}
         ${variableName}.CursorPosition = ${this.cursorPosition}
         ${variableName}.MultiLine = ${this.multiLine}
-        ${variableName}.PlaceholderColor3 = ${this.placeholderColor3}
-        ${variableName}.PlaceholderText = ${this.placeholderText}
+        ${variableName}.PlaceholderColor3 = ${this.placeholderColor3.toCode()}
+        ${variableName}.PlaceholderText = "${this.placeholderText}"
         ${variableName}.SelectionStart = ${this.selectionStart}
         ${variableName}.ShowNativeInput = ${this.showNativeInput}
         ${variableName}.TextEditable = ${this.textEditable}
@@ -2583,10 +2842,10 @@ abstract class UIGridStyleLayout extends UILayout {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.FillDirection = ${this.fillDirection}
-        ${variableName}.HorizontalAlignment = ${this.horizontalAlignment}
-        ${variableName}.SortOrder = ${this.sortOrder}
-        ${variableName}.VerticalAlignment = ${this.verticalAlignment}
+        ${variableName}.FillDirection = ${toCode(this.fillDirection)}
+        ${variableName}.HorizontalAlignment = ${toCode(this.horizontalAlignment)}
+        ${variableName}.SortOrder = ${toCode(this.sortOrder)}
+        ${variableName}.VerticalAlignment = ${toCode(this.verticalAlignment)}
         `;
     }
 }
@@ -2618,8 +2877,8 @@ export class UIAspectRatioConstraint extends UIConstraint {
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
         ${variableName}.AspectRatio = ${this.aspectRatio}
-        ${variableName}.AspectType = ${this.aspectType}
-        ${variableName}.DominantAxis = ${this.dominantAxis}
+        ${variableName}.AspectType = ${toCode(this.aspectType)}
+        ${variableName}.DominantAxis = ${toCode(this.dominantAxis)}
         `;
     }
 }
@@ -2644,7 +2903,7 @@ export class UICorner extends UIConstraint {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.CornerRadius = ${this.cornerRadius}
+        ${variableName}.CornerRadius = ${this.cornerRadius.toCode()}
         `;
     }
 }
@@ -2678,9 +2937,9 @@ export class UIFlexItem extends UIComponent {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.FlexMode = ${this.flexMode}
+        ${variableName}.FlexMode = ${toCode(this.flexMode)}
         ${variableName}.GrowRatio = ${this.growRatio}
-        ${variableName}.ItemLineAlignment = ${this.itemLineAlignment}
+        ${variableName}.ItemLineAlignment = ${toCode(this.itemLineAlignment)}
         ${variableName}.ShrinkRatio = ${this.shrinkRatio}
         `;
     }
@@ -2722,9 +2981,9 @@ export class UIGradient extends UIComponent {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.Color = ${this.color}
+        ${variableName}.Color = ${this.color.toCode()}
         ${variableName}.Enabled = ${this.enabled}
-        ${variableName}.Offset = ${this.offset}
+        ${variableName}.Offset = ${this.offset.toCode()}
         ${variableName}.Rotation = ${this.rotation}
         ${variableName}.Transparency = ${this.transparency}
         `;
@@ -2770,10 +3029,10 @@ export class UIGridLayout extends UIGridStyleLayout {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.CellPadding = ${this.cellPadding}
-        ${variableName}.CellSize = ${this.cellSize}
+        ${variableName}.CellPadding = ${this.cellPadding.toCode()}
+        ${variableName}.CellSize = ${this.cellSize.toCode()}
         ${variableName}.FillDirectionMaxCells = ${this.fillDirectionMaxCells}
-        ${variableName}.StartCorner = ${this.startCorner}
+        ${variableName}.StartCorner = ${toCode(this.startCorner)}
         `;
     }
 }
@@ -2820,10 +3079,10 @@ export class UIListLayout extends UIGridStyleLayout {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.HorizontalFlex = ${this.horizontalFlex}
-        ${variableName}.ItemLineAlignment = ${this.itemLineAlignment}
-        ${variableName}.Padding = ${this.padding}
-        ${variableName}.VerticalFlex = ${this.verticalFlex}
+        ${variableName}.HorizontalFlex = ${toCode(this.horizontalFlex)}
+        ${variableName}.ItemLineAlignment = ${toCode(this.itemLineAlignment)}
+        ${variableName}.Padding = ${this.padding.toCode()}
+        ${variableName}.VerticalFlex = ${toCode(this.verticalFlex)}
         ${variableName}.Wraps = ${this.wraps}
         `;
     }
@@ -2858,10 +3117,10 @@ export class UIPadding extends UIComponent {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.PaddingBottom = ${this.paddingBottom}
-        ${variableName}.PaddingLeft = ${this.paddingLeft}
-        ${variableName}.PaddingRight = ${this.paddingRight}
-        ${variableName}.PaddingTop = ${this.paddingTop}
+        ${variableName}.PaddingBottom = ${this.paddingBottom.toCode()}
+        ${variableName}.PaddingLeft = ${this.paddingLeft.toCode()}
+        ${variableName}.PaddingRight = ${this.paddingRight.toCode()}
+        ${variableName}.PaddingTop = ${this.paddingTop.toCode()}
         `;
     }
 }
@@ -2922,10 +3181,10 @@ export class UIPageLayout extends UIGridStyleLayout {
         return super.toCode(variableName) + `
         ${variableName}.Animated = ${this.animated}
         ${variableName}.Circular = ${this.circular}
-        ${variableName}.EasingDirection = ${this.easingDirection}
-        ${variableName}.EasingStyle = ${this.easingStyle}
+        ${variableName}.EasingDirection = ${toCode(this.easingDirection)}
+        ${variableName}.EasingStyle = ${toCode(this.easingStyle)}
         ${variableName}.GamepadInputEnabled = ${this.gamepadInputEnabled}
-        ${variableName}.Padding = ${this.padding}
+        ${variableName}.Padding = ${this.padding.toCode()}
         ${variableName}.ScrollWheelInputEnabled = ${this.scrollWheelInputEnabled}
         ${variableName}.TouchInputEnabled = ${this.touchInputEnabled}
         ${variableName}.TweenTime = ${this.tweenTime}
@@ -2981,8 +3240,8 @@ export class UISizeConstraint extends UIConstraint {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.MaxSize = ${this.maxSize}
-        ${variableName}.MinSize = ${this.minSize}
+        ${variableName}.MaxSize = ${this.maxSize.toCode()}
+        ${variableName}.MinSize = ${this.minSize.toCode()}
         `;
     }
 }
@@ -3022,10 +3281,10 @@ export class UIStroke extends UIComponent {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.ApplyStrokeMode = ${this.applyStrokeMode}
-        ${variableName}.Color = ${this.color}
+        ${variableName}.ApplyStrokeMode = ${toCode(this.applyStrokeMode)}
+        ${variableName}.Color = ${this.color.toCode()}
         ${variableName}.Enabled = ${this.enabled}
-        ${variableName}.LineJoinMode = ${this.lineJoinMode}
+        ${variableName}.LineJoinMode = ${toCode(this.lineJoinMode)}
         ${variableName}.Thickness = ${this.thickness}
         ${variableName}.Transparency = ${this.transparency}
         `;
@@ -3073,8 +3332,8 @@ export class UITableLayout extends UIGridStyleLayout {
         return super.toCode(variableName) + `
         ${variableName}.FillEmptySpaceColumns = ${this.fillEmptySpaceColumns}
         ${variableName}.FillEmptySpaceRows = ${this.fillEmptySpaceRows}
-        ${variableName}.MajorAxis = ${this.majorAxis}
-        ${variableName}.Padding = ${this.padding}
+        ${variableName}.MajorAxis = ${toCode(this.majorAxis)}
+        ${variableName}.Padding = ${this.padding.toCode()}
         `;
     }
 }

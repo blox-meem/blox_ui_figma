@@ -1,5 +1,7 @@
 import { assert } from "console";
 
+import tinycolor from 'tinycolor2';
+
 abstract class RobloxObject {}
 
 interface RobloxCodeParser {
@@ -70,13 +72,33 @@ export class Color3 implements RobloxGlobalObject {
     g: number;
     b: number;
 
-    constructor(r: number, g: number, b: number) {
-        assert(r >= 0 && r <= 255);
-        assert(g >= 0 && g <= 255);
-        assert(b >= 0 && b <= 255);
-        this.r = r;
-        this.g = g;
-        this.b = b;
+    constructor(hex: string);
+    constructor(r: number | string, g: number, b: number);
+    constructor(r?: number | string, g?: number, b?: number) {
+        if (
+            typeof r == "number" &&
+            typeof g == "number" && 
+            typeof b == "number"
+        ) {
+            assert(r >= 0 && r <= 255);
+            assert(g >= 0 && g <= 255);
+            assert(b >= 0 && b <= 255);
+            this.r = r;
+            this.g = g;
+            this.b = b;
+        } else if (
+            typeof r == "string" &&
+            typeof g == "undefined" && 
+            typeof b == "undefined"
+        ) {
+            assert(r.length == 6);
+            const resultColor = tinycolor(r).toRgb();
+            this.r = resultColor.r;
+            this.g = resultColor.g;
+            this.b = resultColor.b;
+        } else {
+            throw Error("Parameter configuration unimplemented")
+        }
     }
 
     toCode(): string {
@@ -131,11 +153,65 @@ export class UDim implements RobloxGlobalObject {
 export class UDim2 implements RobloxGlobalObject {
     x: UDim;
     y: UDim;
+    width: UDim;
+    height: UDim;
+    
+    constructor();
+    constructor(xScale: number, xOffset: number, yScale: number, yOffset: number);
+    constructor(x: UDim, y: UDim);
+    constructor(xScale: number, yScale: number);
 
-    constructor(xScale: number, xOffset: number, yScale: number, yOffset: number) {
-        this.x = new UDim(xScale, xOffset);
-        this.y = new UDim(yScale, yOffset);
+    constructor(
+        xS?: number | UDim, 
+        xO?: number | UDim, 
+        yS?: number, 
+        yO?: number
+    ) {
+        if (
+            typeof xS === "undefined" &&
+            typeof xO === "undefined" &&
+            typeof yS === "undefined" &&
+            typeof yO === "undefined"
+        ) {
+            this.x = new UDim(0, 0);
+            this.y = new UDim(0, 0);
+            this.width = new UDim(0, 0);
+            this.height = new UDim(0, 0);
+        } else if (
+            typeof xS === "number" &&
+            typeof xO === "number" &&
+            typeof yS === "number" &&
+            typeof yO === "number" 
+        ) {
+            this.x = new UDim(xS, xO);
+            this.y = new UDim(yS, yO);
+            this.width = new UDim(xS, xO);
+            this.height = new UDim(yS, yO);
+        } else if (
+            xS instanceof UDim &&
+            xO instanceof UDim &&
+            typeof yS === "undefined" &&
+            typeof yO === "undefined" 
+        ) {
+            this.x = xS;
+            this.y = xO;
+            this.width = xS;
+            this.height = xO;
+        } else if (
+            typeof xS === "number" &&
+            typeof xO === "number" &&
+            typeof yS === "undefined" &&
+            typeof yO === "undefined" 
+        ) {
+            this.x = new UDim(xS, 0);
+            this.y = new UDim(xO, 0);
+            this.width = new UDim(xS, 0);
+            this.height = new UDim(xO, 0);
+        } else {
+            throw Error("Wrong parameter implementation");
+        }
     }
+
 
     toCode(): string {
         return `UDIm2.new(${this.x.scale}, ${this.x.offset}, ${this.y.scale}, ${this.y.offset})`;
@@ -421,8 +497,31 @@ export class ColorSequenceKeypoint implements RobloxGlobalObject {
 export class ColorSequence implements RobloxGlobalObject {
     keypoints: ColorSequenceKeypoint[];
 
-    constructor(keypoints: ColorSequenceKeypoint[]) {
-        this.keypoints = keypoints;
+    constructor(c: Color3);
+    constructor(c0: Color3, c1: Color3);
+    constructor(keypoints: ColorSequenceKeypoint[]);
+    constructor(c0?: Color3 | ColorSequenceKeypoint[], c1?: Color3) {
+        if (
+            c0 instanceof Color3 &&
+            typeof c1 === "undefined"
+        ) {
+            this.keypoints = [new ColorSequenceKeypoint(0, c0)];
+        } else if (
+            c0 instanceof Color3 && 
+            c1 instanceof Color3 
+        ) {
+            this.keypoints = [
+                new ColorSequenceKeypoint(0, c0),
+                new ColorSequenceKeypoint(1, c1),
+            ];
+        } else if (
+            !(c0 instanceof Color3) &&
+            typeof c1 === "undefined"    
+        ) {
+            this.keypoints = c0 as ColorSequenceKeypoint[];
+        } else {
+            throw Error("Unimplemented parameter configuration");
+        }
     }
 
     toCode(): string {

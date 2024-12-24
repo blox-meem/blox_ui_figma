@@ -1,4 +1,4 @@
-import { BloxF2RLanguages, convertToCode, convertToCodeText, convertToObject } from './convert';
+import { BloxF2RLanguages, convertToCode, convertToCodeText } from './convert';
 import { downloadFile } from './download';
 import { validate } from './validation';
 import { CodeConvertionError, DownloadError, NavigationError, ObjectConvertionError, UnhandledKeyError, ValidationError } from './errors';
@@ -45,7 +45,7 @@ figma.ui.onmessage =  async (msg: {type: string, value?: string}) => {
   }
   if (msg.type === 'convert-to-object') {
     try {
-      convertToObject(currentPage);
+
     } catch (error) {
       if (error instanceof ObjectConvertionError) {}
     } finally {

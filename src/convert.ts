@@ -3,12 +3,16 @@ import { bloxUITitle, codeGenerationLanguage, dartTitle, luaCodeTitle } from "./
 import { 
     Color3,
     ColorSequence,
+    ColorSequenceKeypoint,
+    Font,
+    FontStyle,
     Frame, 
     GuiBase, 
     ImageButton, 
     ImageLabel, 
     Instance,
     LocalizationTable, 
+    RobloxUI, 
     SafeAreaCompatibility, 
     ScreenGui,
     ScreenGuiProperties,
@@ -18,6 +22,10 @@ import {
     TextBox, 
     TextButton, 
     TextLabel, 
+    TextTruncate, 
+    TextXAlignment, 
+    TextYAlignment, 
+    UDim, 
     UDim2, 
     UIAspectRatioConstraint, 
     UICorner, 
@@ -36,6 +44,7 @@ import {
     ViewportFrame, 
     ZIndexBehaviour 
 } from "./lua";
+import { processNestedNodes, SelectedComponentMap, SelectedNodeMap, selectedNodes } from "./structure";
 
 
 export enum BloxF2RLanguages {
@@ -353,7 +362,19 @@ interface EffectsObject {
 
 declare type ConstraintObject = Constraints;
 
-abstract class FigmaObject<OBJECTTYPE> implements RadiusObject, VisibleObject, PositionObject, SizeObject, ColorObject, StrokeObject, RotationObject, ConstraintObject, EffectsObject {
+abstract class FigmaObject<OBJECTTYPE> implements 
+    RadiusObject, 
+    VisibleObject, 
+    PositionObject, 
+    SizeObject, 
+    ColorObject, 
+    StrokeObject, 
+    RotationObject, 
+    ConstraintObject, 
+    EffectsObject 
+{
+    name: string;
+
     figmaObjectType: OBJECTTYPE;
     
     cornerRadius?: number | undefined;
@@ -394,6 +415,7 @@ abstract class FigmaObject<OBJECTTYPE> implements RadiusObject, VisibleObject, P
     effects: Effects;
     
     constructor(params: {
+        name: string,
         figmaObjectType: OBJECTTYPE,
         cornerRadius?: number | undefined,
         topLeftRadius?: number | undefined,
@@ -446,6 +468,8 @@ abstract class FigmaObject<OBJECTTYPE> implements RadiusObject, VisibleObject, P
             || typeof params.bottomRightRadius === "number"
         );
 
+        this.name = params.name;
+
         this.figmaObjectType = params.figmaObjectType;
 
         this.cornerRadius = params.cornerRadius;
@@ -490,6 +514,8 @@ abstract class FigmaObject<OBJECTTYPE> implements RadiusObject, VisibleObject, P
 declare type RectangleType = "FRAME" | "SCROLLINGFRAME" | "VIEWPORTFRAME";
 
 declare type FigmaObjectParameters<OBJECTTYPE> = {
+        name: string;
+
         figmaObjectType: OBJECTTYPE,
 
         cornerRadius?: number | undefined,
@@ -530,9 +556,60 @@ declare type FigmaObjectParameters<OBJECTTYPE> = {
         effects?: Effects,
 };
 
+declare type GroupType = "GROUP";
+
+export class FigmaGroup extends FigmaObject<GroupType> {
+    constructor(params: FigmaObjectParameters<GroupType>) {
+        super({
+            name: params.name,
+
+            figmaObjectType: params.figmaObjectType,
+
+            cornerRadius: params.cornerRadius,
+            topLeftRadius: params.topLeftRadius,
+            topRightRadius: params.topRightRadius,
+            bottomLeftRadius: params.bottomLeftRadius,
+            bottomRightRadius: params.bottomRightRadius,
+            
+            visible: params.visible ?? true,
+            opacity: params.opacity ?? 1,
+            
+            x: params.x ?? 0,
+            y: params.y ?? 0,
+            
+            width: params.width ?? 100,
+            height: params.height ?? 100,
+            minWidth: params.minWidth,
+            maxWidth: params.maxWidth,
+            minHeight: params.minHeight,
+            maxHeight: params.maxHeight,
+            
+            fills: params.fills ?? [new MonoColor({})],
+            
+            strokes: params.strokes ?? [],
+            strokeWeight: params.strokeWeight,
+            strokeTopWeight: params.strokeTopWeight,
+            strokeBottomWeight: params.strokeBottomWeight,
+            strokeLeftWeight: params.strokeLeftWeight,
+            strokeRightWeight: params.strokeRightWeight,
+            strokeJoin: params.strokeJoin ?? "MITER",
+            strokeAlign: params.strokeAlign ?? "CENTER",
+            
+            rotation: params.rotation ?? 0,
+        
+            horizontal: params.horizontal ?? "CENTER",
+            vertical: params.vertical ?? "CENTER",
+            
+            effects: params.effects ?? [],
+        });
+    }
+}
+
 export class FigmaRectangle extends FigmaObject<RectangleType> {
     constructor(params: FigmaObjectParameters<RectangleType>) {
         super({
+            name: params.name,
+
             figmaObjectType: params.figmaObjectType,
             
             cornerRadius: params.cornerRadius,
@@ -580,6 +657,8 @@ declare type EllipseType = "FRAME" | "TEXTBUTTON";
 export class FigmaEllipse extends FigmaObject<EllipseType> {
     constructor(params: FigmaObjectParameters<EllipseType>) {
         super({
+            name: params.name,
+
             figmaObjectType: params.figmaObjectType,
 
             cornerRadius: params.cornerRadius,
@@ -628,9 +707,9 @@ export class FigmaEllipse extends FigmaObject<EllipseType> {
 
 declare type TextType = "TEXTLABEL" | "TEXTBUTTON" | "TEXTBOX";
 
-declare type TextAlignHorizontal = 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED';
+export declare type TextAlignHorizontal = 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED';
 
-declare type TextAlignVertical = 'TOP' | 'CENTER' | 'BOTTOM';
+export declare type TextAlignVertical = 'TOP' | 'CENTER' | 'BOTTOM';
 
 export class Alignment {
     horizontal: TextAlignHorizontal;
@@ -645,9 +724,9 @@ export class Alignment {
     }
 }
 
-declare type TextAutoResize = 'NONE' | 'WIDTH_AND_HEIGHT' | 'HEIGHT' | 'TRUNCATE';
+export declare type TextAutoResize = 'NONE' | 'WIDTH_AND_HEIGHT' | 'HEIGHT' | 'TRUNCATE';
 
-declare type TextTruncation = 'DISABLED' | 'ENDING';
+export declare type TextTruncation = 'DISABLED' | 'ENDING';
 
 class FigmaFont implements FontName {
     fontSize: number;
@@ -693,6 +772,7 @@ export class TextStyle {
         decoration?: TextDecoration,
         letterSpacing?: LetterSpacing,
         lineHeight?: LineHeight,
+        richText?: boolean,
     }) {
         this.truncation = params.truncation ?? "DISABLED";
         this.maxLines = params.maxLines ?? null;
@@ -707,7 +787,7 @@ export class TextStyle {
             unit: "PERCENT",
             value: 0,
         };
-        this.lineHeight = params.lineHeight ?? {unit: "AUTO"};
+        this.lineHeight = params.lineHeight ?? {unit: "PIXELS", value: 0};
     }
 }
 
@@ -722,6 +802,8 @@ interface TextObject {
 }
 
 declare type FigmaTextParameters = {
+    name: string;
+
     figmaObjectType: TextType,
 
     alignment?: Alignment,
@@ -777,6 +859,8 @@ export class FigmaText extends FigmaObject<TextType> implements TextObject {
     
     constructor(params: FigmaTextParameters) {
         super({
+            name: params.name,
+
             figmaObjectType: params.figmaObjectType,
 
             cornerRadius: params.cornerRadius,
@@ -840,6 +924,8 @@ interface ImageObject {
 declare type FigmaObjectAssetParameters<OBJECTTYPE> = {
     hash?: string;
 
+    name: string;
+
     figmaObjectType: OBJECTTYPE,
 
     alignment?: Alignment,
@@ -891,6 +977,8 @@ export class FigmaImage extends FigmaObject<ImageType> implements ImageObject {
 
     constructor(params: FigmaObjectAssetParameters<ImageType>) {
         super({
+            name: params.name,
+
             figmaObjectType: params.figmaObjectType,
 
             cornerRadius: params.cornerRadius,
@@ -956,6 +1044,8 @@ export class FigmaVideo extends FigmaObject<VideoType> implements VideoObject {
 
     constructor(params: FigmaObjectAssetParameters<VideoType>) {
         super({
+            name: params.name,
+
             figmaObjectType: "VIDEOFRAME",
 
             cornerRadius: params.cornerRadius,
@@ -999,6 +1089,55 @@ export class FigmaVideo extends FigmaObject<VideoType> implements VideoObject {
     }
 }
 
+declare type FrameType = "SCROLLINGFRAME";
+
+export class FigmaFrame extends FigmaObject<FrameType> {
+    constructor(params: FigmaObjectParameters<FrameType>) {
+        super({
+            name: params.name,
+
+            figmaObjectType: params.figmaObjectType,
+
+            cornerRadius: params.cornerRadius,
+            topLeftRadius: params.topLeftRadius,
+            topRightRadius: params.topRightRadius,
+            bottomLeftRadius: params.bottomLeftRadius,
+            bottomRightRadius: params.bottomRightRadius,
+            
+            visible: params.visible ?? true,
+            opacity: params.opacity ?? 1,
+            
+            x: params.x ?? 0,
+            y: params.y ?? 0,
+            
+            width: params.width ?? 100,
+            height: params.height ?? 100,
+            minWidth: params.minWidth,
+            maxWidth: params.maxWidth,
+            minHeight: params.minHeight,
+            maxHeight: params.maxHeight,
+            
+            fills: params.fills ?? [new MonoColor({})],
+            
+            strokes: params.strokes ?? [],
+            strokeWeight: params.strokeWeight,
+            strokeTopWeight: params.strokeTopWeight,
+            strokeBottomWeight: params.strokeBottomWeight,
+            strokeLeftWeight: params.strokeLeftWeight,
+            strokeRightWeight: params.strokeRightWeight,
+            strokeJoin: params.strokeJoin ?? "MITER",
+            strokeAlign: params.strokeAlign ?? "CENTER",
+            
+            rotation: params.rotation ?? 0,
+        
+            horizontal: params.horizontal ?? "CENTER",
+            vertical: params.vertical ?? "CENTER",
+            
+            effects: params.effects ?? [],
+        });
+    }
+}
+
 //
 
 interface RobloxConstraintWrapper {}
@@ -1024,6 +1163,9 @@ export declare type RobloxUIType = RectangleType | EllipseType | TextType;
 //
 
 export const keyProperties: Array<string> = [
+    // Instance
+    "NAME",
+    "PARENT",
     // GuiObject
     "BACKGROUNDCOLOR3",
     "BACKGROUNDTRANSPARENCY",
@@ -1033,7 +1175,6 @@ export const keyProperties: Array<string> = [
     "SIZE",
     "VISIBLE",
     // ScrollingFrame
-    "CANVASPOSTION",
     "CANVASIZE",
     // VideoFrame
     "VIDEO",
@@ -1045,7 +1186,6 @@ export const keyProperties: Array<string> = [
     // TextLabel
     "FONTFACE",
     "LINEHEIGHT",
-    "RICHTEXT",
     "TEXT",
     "TEXTCOLOR3",
     "TEXTSIZE",
@@ -1092,6 +1232,7 @@ export const ignorableProperties: Array<string> = [
     // ScrollingFrame
     "AUTOMATICCANVASSIZE",
     "BOTTOMIMAGE",
+    "CANVASPOSTION",
     "ELASTICBEHAVIOR",
     "HORIZONTALSCROLLBARINSET",
     "MIDIMAGE",
@@ -1127,6 +1268,7 @@ export const ignorableProperties: Array<string> = [
     // TextLabel & TextButton
     "MAXVISIBLEGRAPHEMES",
     "OPENTYPEFEATURES",
+    "RICHTEXT",
     "TEXTDIRECTION",
     "TEXTSCALED",
     "TEXTSTROKECOLOR",
@@ -1186,31 +1328,33 @@ class RobloxPropertyParser {
 
 declare type FigmaColors = Paint;
 
-/*
+
 export function toRobloxColor(figmaColor: FigmaColors): Color3 | ColorSequence {
     switch (figmaColor.type) {
         case "SOLID":
             const color: RGB = figmaColor.color;
             return new Color3(color.r, color.g, color.b);
         case "GRADIENT_LINEAR":
-            return new ColorSequence();
-        case "GRADIENT_RADIAL":
-        case "GRADIENT_ANGULAR":
-        case "GRADIENT_DIAMOND":
-        case "IMAGE":
-        case "VIDEO":
+            const linearStops: ColorSequenceKeypoint[] = [];
+            for (const stop of figmaColor.gradientStops) {
+                const stopColor = stop.color;
+                const keypoint = new ColorSequenceKeypoint(stop.position, new Color3(stopColor.r, stopColor.g, stopColor.b));
+                linearStops.push(keypoint);
+            }
+            linearStops.sort((prev, current) => prev.time - current.time);
+            return new ColorSequence(linearStops);
         default:
             throw Error("Unimplemented Figma paint type");
     }
 }
-*/
+
 declare type ImageNode = { type: "IMAGE", data: Uint8Array };
 
 declare type VideoNode = { type: "VIDEO", data: Uint8Array };
 
-declare type FigmaObjectType = RectangleNode | EllipseNode | TextNode | ImageNode | VideoNode;
+declare type FigmaObjectType = RectangleNode | EllipseNode | TextNode | ImageNode | VideoNode | FrameNode | GroupNode;
 
-declare type FigmaObjectReturnType = FigmaRectangle | FigmaEllipse | FigmaText | FigmaImage | FigmaVideo;
+declare type FigmaObjectReturnType = FigmaRectangle | FigmaEllipse | FigmaText | FigmaImage | FigmaVideo | FigmaGroup | FigmaFrame; 
 
 export async function convertFigmaToFigmaObject(node: FigmaObjectType, typeValue?: ImageType | VideoType): Promise<FigmaObjectReturnType> {
     switch (node.type) {
@@ -1218,6 +1362,8 @@ export async function convertFigmaToFigmaObject(node: FigmaObjectType, typeValue
             const rectangleClone: RectangleNode = (node as RectangleNode).clone();
             const rectangleComponent: ComponentNode = figma.createComponentFromNode(rectangleClone);
             return new FigmaRectangle({
+                name: rectangleClone.name,
+
                 figmaObjectType: rectangleComponent.componentPropertyDefinitions["FIGMAOBJECTTYPE"].defaultValue as RectangleType,
                 
                 cornerRadius: rectangleClone.cornerRadius as number,
@@ -1260,6 +1406,8 @@ export async function convertFigmaToFigmaObject(node: FigmaObjectType, typeValue
             const ellipseClone: EllipseNode = (node as EllipseNode).clone();
             const ellipseComponent: ComponentNode = figma.createComponentFromNode(ellipseClone);
             return new FigmaEllipse({
+                name: ellipseClone.name,
+
                 figmaObjectType: ellipseComponent.componentPropertyDefinitions["FIGMAOBJECTTYPE"].defaultValue as EllipseType,
             
                 cornerRadius: ellipseClone.cornerRadius as number,
@@ -1295,6 +1443,8 @@ export async function convertFigmaToFigmaObject(node: FigmaObjectType, typeValue
             const textClone: TextNode = (node as TextNode).clone();
             const textComponent: ComponentNode = figma.createComponentFromNode(textClone);
             return new FigmaText({
+                name: textClone.name,
+
                 figmaObjectType: textComponent.componentPropertyDefinitions["FIGMAOBJECTTYPE"].defaultValue as TextType,  
                 
                 alignment: new Alignment({
@@ -1365,6 +1515,8 @@ export async function convertFigmaToFigmaObject(node: FigmaObjectType, typeValue
             const imageComponent: ComponentNode = figma.createComponentFromNode(imageRectangle);
             imageComponent.addComponentProperty("FIGMAOBJECTTYPE", "TEXT", typeValue as ImageType);
             return new FigmaImage({
+                name: image.hash,
+
                 figmaObjectType: imageComponent.componentPropertyDefinitions["FIGMAOBJECTTYPE"].defaultValue as ImageType,
                 
                 cornerRadius: imageRectangle.cornerRadius as number,
@@ -1418,6 +1570,8 @@ export async function convertFigmaToFigmaObject(node: FigmaObjectType, typeValue
             const videoComponent: ComponentNode = figma.createComponentFromNode(videoRectangle);
             videoComponent.addComponentProperty("FIGMAOBJECTTYPE", "TEXT", typeValue as VideoType);
             return new FigmaVideo({
+                name: video.hash,
+
                 figmaObjectType: videoComponent.componentPropertyDefinitions["FIGMAOBJECTTYPE"].defaultValue as VideoType,
             
                 cornerRadius: videoRectangle.cornerRadius as number,
@@ -1458,73 +1612,264 @@ export async function convertFigmaToFigmaObject(node: FigmaObjectType, typeValue
 
                 hash: video.hash,
             });
+        case "FRAME":
+            const frameNodeClone: FrameNode = (node as FrameNode).clone();
+            return new FigmaFrame({
+                name: frameNodeClone.name,
+
+                figmaObjectType: "SCROLLINGFRAME",
+            
+                cornerRadius: frameNodeClone.cornerRadius as number,
+                topLeftRadius: frameNodeClone.topLeftRadius,
+                topRightRadius: frameNodeClone.topRightRadius,
+                bottomLeftRadius: frameNodeClone.bottomLeftRadius,
+                bottomRightRadius: frameNodeClone.bottomRightRadius,
+                
+                visible: frameNodeClone.visible,
+                opacity: frameNodeClone.opacity,
+
+                x: frameNodeClone.x,
+                y: frameNodeClone.y,
+
+                width: frameNodeClone.width,
+                height: frameNodeClone.height,
+                minWidth: frameNodeClone.minWidth ?? undefined,
+                maxWidth: frameNodeClone.maxWidth ?? undefined,
+                minHeight: frameNodeClone.minHeight ?? undefined,
+                maxHeight: frameNodeClone.maxHeight ?? undefined,
+
+                fills: frameNodeClone.fills as readonly Paint[],
+
+                strokes: frameNodeClone.strokes,
+                strokeTopWeight: frameNodeClone.strokeTopWeight,
+                strokeBottomWeight: frameNodeClone.strokeBottomWeight,
+                strokeLeftWeight: frameNodeClone.strokeLeftWeight,
+                strokeRightWeight: frameNodeClone.strokeRightWeight,
+                strokeJoin: frameNodeClone.strokeJoin as StrokeJoin ?? figma.mixed,
+                strokeAlign: frameNodeClone.strokeAlign ?? undefined,
+                
+                rotation: frameNodeClone.rotation,
+                
+                horizontal: frameNodeClone.constraints.horizontal,
+                vertical: frameNodeClone.constraints.vertical,
+                
+                effects: frameNodeClone.effects,
+            });
+        case "GROUP":
+            const groupNodeClone: GroupNode = (node as GroupNode).clone();
+            return new FigmaGroup({
+                name: groupNodeClone.name,
+
+                figmaObjectType: "GROUP",
+                
+                visible: groupNodeClone.visible,
+                opacity: groupNodeClone.opacity,
+
+                x: groupNodeClone.x,
+                y: groupNodeClone.y,
+
+                width: groupNodeClone.width,
+                height: groupNodeClone.height,
+                minWidth: groupNodeClone.minWidth ?? undefined,
+                maxWidth: groupNodeClone.maxWidth ?? undefined,
+                minHeight: groupNodeClone.minHeight ?? undefined,
+                maxHeight: groupNodeClone.maxHeight ?? undefined,
+                
+                rotation: groupNodeClone.rotation,
+                
+                effects: groupNodeClone.effects,
+            });
     }
 }
 
-declare type FigmaObjects = FigmaRectangle | FigmaEllipse | FigmaText | FigmaImage | FigmaVideo;
+declare type FigmaObjects = FigmaRectangle | FigmaEllipse | FigmaText | FigmaImage | FigmaVideo | FigmaFrame | FigmaGroup;
 
-function assembleScreenGui(params: ScreenGuiProperties): ScreenGui {
+export function assembleScreenGui(params: ScreenGuiProperties): ScreenGui {
     return new ScreenGui(params);
 }
 
-export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects, screenGuiProperties: ScreenGuiProperties): GuiBase {
-    const screenGui: ScreenGui = assembleScreenGui(screenGuiProperties);
+function truncate(textTruncate: TextTruncation): TextTruncate {
+    switch (textTruncate) {
+        case "DISABLED":
+            return TextTruncate.none;
+        case "ENDING":
+            return TextTruncate.atEnd;
+    }
+}
+
+function textXAllignment(textAlignHorizontal: TextAlignHorizontal): TextXAlignment {
+    switch (textAlignHorizontal) {
+        case "LEFT":
+            return TextXAlignment.left;
+        case "CENTER":
+            return TextXAlignment.center;
+        case "RIGHT":
+            return TextXAlignment.right;
+        case "JUSTIFIED":
+            return TextXAlignment.center;
+    }
+}
+
+function textYAllignment(textAlignVertical: TextAlignVertical): TextYAlignment {
+    switch (textAlignVertical) {
+        case "TOP":
+            return TextYAlignment.top;
+        case "CENTER":
+            return TextYAlignment.center;
+        case "BOTTOM":
+            return TextYAlignment.bottom;
+    }
+}
+
+export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): GuiBase {
     switch (figmaObject.figmaObjectType) {
         case "FRAME":
             const rectangleFrameObject: FigmaRectangle = (figmaObject as FigmaRectangle);
             return new Frame({
-                parent: screenGui,
                 //
-                // backgroundColor: rectangleFrameObject.fills[0]
+                backgroundColor3: toRobloxColor(rectangleFrameObject.fills[0]) as Color3,
+                backgroundTransparency: rectangleFrameObject.opacity,
+                size: new UDim2(),
+                visible: rectangleFrameObject.visible,
             });
         case "SCROLLINGFRAME":
             const scrollingFrameObject: FigmaRectangle = (figmaObject as FigmaRectangle);
             return new ScrollingFrame({
-                parent: screenGui,
+                backgroundColor3: toRobloxColor(scrollingFrameObject.fills[0]) as Color3,
+                backgroundTransparency: scrollingFrameObject.opacity,
+                size: new UDim2(),
+                visible: scrollingFrameObject.visible,
+                //
+                canvasSize: new UDim2(),
             });
         case "VIEWPORTFRAME":
             const viewportFrameObject: FigmaRectangle = (figmaObject as FigmaRectangle);
             return new ViewportFrame({
-                parent: screenGui,
+                backgroundColor3: toRobloxColor(viewportFrameObject.fills[0]) as Color3,
+                backgroundTransparency: viewportFrameObject.opacity,
+                size: new UDim2(),
+                visible: viewportFrameObject.visible,
+                //
+                imageColor3: toRobloxColor(viewportFrameObject.fills[0]) as Color3,
+                imageTransparency: viewportFrameObject.opacity,
             });
         case "VIDEOFRAME":
             const videoFrameObject: FigmaVideo = (figmaObject as FigmaVideo);
             return new VideoFrame({
-                parent: screenGui,
+                backgroundColor3: toRobloxColor(videoFrameObject.fills[0]) as Color3,
+                backgroundTransparency: videoFrameObject.opacity,
+                size: new UDim2(),
+                visible: videoFrameObject.visible,
+                //
+                video: videoFrameObject.hash,
             });
         case "IMAGELABEL":
             const imageLabelObject: FigmaImage = (figmaObject as FigmaImage);
             return new ImageLabel({
-                parent: screenGui,
+                backgroundColor3: toRobloxColor(imageLabelObject.fills[0]) as Color3,
+                backgroundTransparency: imageLabelObject.opacity,
+                size: new UDim2(),
+                visible: imageLabelObject.visible,
+                //
+                image: imageLabelObject.hash,
             });
         case "IMAGEBUTTON":
             const imageButtonObject: FigmaImage = (figmaObject as FigmaImage);
             return new ImageButton({
-                parent: screenGui,
+                backgroundColor3: toRobloxColor(imageButtonObject.fills[0]) as Color3,
+                backgroundTransparency: imageButtonObject.opacity,
+                size: new UDim2(),
+                visible: imageButtonObject.visible,
+                //
+                image: imageButtonObject.hash,
             });
         case "TEXTBOX":
             const textBoxObject: FigmaText = (figmaObject as FigmaText);
+            const textBoxStyle = textBoxObject.textStyle;
             return new TextBox({
-                parent: screenGui,
+                backgroundColor3: toRobloxColor(textBoxObject.fills[0]) as Color3,
+                backgroundTransparency: textBoxObject.opacity,
+                size: new UDim2(),
+                visible: textBoxObject.visible,
+                //
+                fontFace: new Font(
+                    textBoxObject.font.family,
+                    textBoxObject.font.fontWeight,
+                    textBoxObject.font.style == "Regular" ? FontStyle.normal : FontStyle.italic,
+                ),
+                lineHeight: 
+                    textBoxStyle.lineHeight.unit === "PIXELS" ||
+                    textBoxStyle.lineHeight.unit === "PERCENT" ? textBoxStyle.lineHeight.value : 0,
+                text: textBoxObject.text,
+                textColor: toRobloxColor(textBoxObject.fills[0]) as Color3,
+                textSize: textBoxObject.font.fontSize,
+                textTransparency: textBoxObject.opacity,
+                textTruncate: truncate(textBoxObject.textStyle.truncation),
+                textXAlignment: textXAllignment(textBoxObject.alignment.horizontal),
+                textYAlignment: textYAllignment(textBoxObject.alignment.vertical), 
             });
         case "TEXTBUTTON":
             const textButtonObject: FigmaText = (figmaObject as FigmaText);
+            const textButtonStyle = textButtonObject.textStyle;
             return new TextButton({
-                parent: screenGui,
+                backgroundColor3: toRobloxColor(textButtonObject.fills[0]) as Color3,
+                backgroundTransparency: textButtonObject.opacity,
+                size: new UDim2(),
+                visible: textButtonObject.visible,
+                //
+                fontFace: new Font(
+                    textButtonObject.font.family,
+                    textButtonObject.font.fontWeight,
+                    textButtonObject.font.style == "Regular" ? FontStyle.normal : FontStyle.italic,
+                ),
+                lineHeight: 
+                    textButtonStyle.lineHeight.unit === "PIXELS" ||
+                    textButtonStyle.lineHeight.unit === "PERCENT" ? textButtonStyle.lineHeight.value : 0,
+                text: textButtonObject.text,
+                textColor: toRobloxColor(textButtonObject.fills[0]) as Color3,
+                textSize: textButtonObject.font.fontSize,
+                textTransparency: textButtonObject.opacity,
+                textTruncate: truncate(textButtonObject.textStyle.truncation),
+                textXAlignment: textXAllignment(textButtonObject.alignment.horizontal),
+                textYAlignment: textYAllignment(textButtonObject.alignment.vertical), 
             });
         case "TEXTLABEL":
             const textLabelObject: FigmaText = (figmaObject as FigmaText);
+            const textLabelStyle = textLabelObject.textStyle;
             return new TextLabel({
-                parent: screenGui,
+                backgroundColor3: toRobloxColor(textLabelObject.fills[0]) as Color3,
+                backgroundTransparency: textLabelObject.opacity,
+                size: new UDim2(),
+                visible: textLabelObject.visible,
+                //
+                fontFace: new Font(
+                    textLabelObject.font.family,
+                    textLabelObject.font.fontWeight,
+                    textLabelObject.font.style == "Regular" ? FontStyle.normal : FontStyle.italic,
+                ),
+                lineHeight: 
+                    textLabelStyle.lineHeight.unit === "PIXELS" ||
+                    textLabelStyle.lineHeight.unit === "PERCENT" ? textLabelStyle.lineHeight.value : 0,
+                text: textLabelObject.text,
+                textColor: toRobloxColor(textLabelObject.fills[0]) as Color3,
+                textSize: textLabelObject.font.fontSize,
+                textTransparency: textLabelObject.opacity,
+                textTruncate: truncate(textLabelObject.textStyle.truncation),
+                textXAlignment: textXAllignment(textLabelObject.alignment.horizontal),
+                textYAlignment: textYAllignment(textLabelObject.alignment.vertical), 
+            });
+        case "GROUP":
+            const figmaGroupObject: FigmaGroup = (figmaObject as FigmaGroup);
+            return new Frame({
+                backgroundColor3: toRobloxColor(figmaGroupObject.fills[0]) as Color3,
+                backgroundTransparency: figmaGroupObject.opacity,
+                size: new UDim2(),
+                visible: figmaGroupObject.visible,
             });
     }
 }
 
 export function convertToCode(page: PageNode): void {
-    const selection = page.selection;
-}
-
-export function convertToObject(page: PageNode): void {
     const selection = page.selection;
 }
 
@@ -1559,3 +1904,78 @@ export function convertToCodeText(
 function generateCode(selection: readonly SceneNode[], language: BloxF2RLanguages): string {
     return '';
 }
+
+export default async function main(): Promise<void> {
+    const robloxObjectContainer: RobloxUI[] = [];
+    processNestedNodes(async (nodeMap) => {
+        const parent = nodeMap.parent;
+        if (nodeMap.type === 'FRAME') {
+            const frameNode = nodeMap.affiliatedNode as FrameNode;
+            const frameFigmaObject = await convertFigmaToFigmaObject(frameNode) as FigmaFrame;
+            const scrollingFrame = convertFigmaObjectToRobloxObject(frameFigmaObject) as ScrollingFrame;
+            robloxObjectContainer.push(scrollingFrame);
+        } else if (nodeMap.type === 'RECTANGLE') {
+            const rectangleNode = nodeMap.affiliatedNode as RectangleNode;
+            const rectangleFigmaObject = await convertFigmaToFigmaObject(rectangleNode) as FigmaRectangle;
+            const frame = convertFigmaObjectToRobloxObject(rectangleFigmaObject) as Frame;
+            robloxObjectContainer.push(frame);
+        } else if (nodeMap.type === 'ELLIPSE') {
+            const ellipseNode = nodeMap.affiliatedNode as EllipseNode;
+            const ellipseFigmaObject = await convertFigmaToFigmaObject(ellipseNode) as FigmaEllipse;
+            const frameAsEllipse = convertFigmaObjectToRobloxObject(ellipseFigmaObject) as Frame;
+            const uiCorner: UICorner = new UICorner({
+                cornerRadius: new UDim(0.5, 0),
+            });
+            frameAsEllipse.addChild(uiCorner);
+            robloxObjectContainer.push(frameAsEllipse);
+        } else if (nodeMap.type === 'GROUP') {
+            const groupNode = nodeMap.affiliatedNode as GroupNode;
+            const groupFigmaObject = await convertFigmaToFigmaObject(groupNode) as FigmaGroup;
+            const frameAsGroup = convertFigmaObjectToRobloxObject(groupFigmaObject) as Frame;
+            robloxObjectContainer.push(frameAsGroup);
+        } else if (nodeMap.type === 'COMPONENT') {
+            if (nodeMap instanceof SelectedComponentMap) {
+                const componentNode = nodeMap.affiliatedNode as ComponentNode;
+                const definitions: ComponentPropertyDefinitions = componentNode.componentPropertyDefinitions;
+                const robloxType = definitions["ROBLOX_UI_TYPE"];
+                assert(robloxType.type === "TEXT");
+                assert(checkValidRobloxType(robloxType.defaultValue));
+                assert(componentNode.children.length === 1)
+                const mainInstance: SceneNode = componentNode.children[0];
+                switch (nodeMap.robloxUIType) {
+                    case "VIEWPORTFRAME":
+                        const viewportFrameRectangleNode = mainInstance as RectangleNode;
+                        const componentViewportFrameFigmaObject = await convertFigmaToFigmaObject(viewportFrameRectangleNode) as FigmaFrame;
+                        const viewportFrame = convertFigmaObjectToRobloxObject(componentViewportFrameFigmaObject) as ViewportFrame;
+                        robloxObjectContainer.push(viewportFrame);
+                        break;
+                    case "IMAGEBUTTON":
+                        const imageButtonRectangleNode = mainInstance as RectangleNode;
+                        const componentImageButtonFigmaObject = await convertFigmaToFigmaObject(imageButtonRectangleNode) as FigmaFrame;
+                        const imageButton = convertFigmaObjectToRobloxObject(componentImageButtonFigmaObject) as ImageButton;
+                        robloxObjectContainer.push(imageButton);
+                        break;
+                    case "TEXTBUTTON":
+                        const textButtonRectangleNode = mainInstance as TextNode;
+                        const componentTextButtonFigmaObject = await convertFigmaToFigmaObject(textButtonRectangleNode) as FigmaVideo;
+                        const textButton = convertFigmaObjectToRobloxObject(componentTextButtonFigmaObject) as TextButton;
+                        robloxObjectContainer.push(textButton);
+                        break;
+                    case "TEXTBOX":
+                        const textBoxRectangleNode = mainInstance as TextNode;
+                        const componentTextBoxFigmaObject = await convertFigmaToFigmaObject(textBoxRectangleNode) as FigmaText;
+                        const textBox = convertFigmaObjectToRobloxObject(componentTextBoxFigmaObject) as TextBox;
+                        robloxObjectContainer.push(textBox);
+                        break;
+                    default:
+                        return;
+                }
+            }
+        } 
+    }); 
+
+}
+function checkValidRobloxType(defaultValue: string | boolean): any {
+    throw new Error("Function not implemented.");
+}
+

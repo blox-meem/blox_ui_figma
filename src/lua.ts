@@ -495,7 +495,7 @@ export class ColorSequenceKeypoint implements RobloxGlobalObject {
 }
 
 export class ColorSequence implements RobloxGlobalObject {
-    keypoints: ColorSequenceKeypoint[];
+    keypoints: ReadonlyArray<ColorSequenceKeypoint>;
 
     constructor(c: Color3);
     constructor(c0: Color3, c1: Color3);
@@ -1021,6 +1021,8 @@ export abstract class GuiBase extends Instance {
 }
 
 abstract class GuiBase2d extends GuiBase {
+    _children: Array<Instance> = [];
+
     autoLocalize: boolean;
     rootLocalizationTable?: LocalizationTable;
     selectionBehaviorDown: SelectionBehavior;
@@ -1054,6 +1056,17 @@ abstract class GuiBase2d extends GuiBase {
         this.selectionBehaviorRight = params.selectionBehaviorRight ?? SelectionBehavior.escape;
         this.selectionBehaviorUp = params.selectionBehaviorUp ?? SelectionBehavior.escape;
         this.selectionGroup = params.selectionGroup ?? false;
+    }
+
+    get children(): readonly Instance[] {
+        return this._children;
+    }
+
+    addChild(child: Instance): void {
+        if (child.parent !== this) {
+            child.parent = this;
+        }
+        this._children.push(child);
     }
 
     toObject(): object {
@@ -1238,7 +1251,7 @@ abstract class GuiObject extends GuiBase2d {
     active: boolean;
     anchorPoint: Vector2;
     automaticSize: AutomaticSize;
-    backgroundColor: Color3;
+    backgroundColor3: Color3;
     backgroundTransparency: number;
     borderColor3: Color3;
     borderMode: BorderMode;
@@ -1276,7 +1289,7 @@ abstract class GuiObject extends GuiBase2d {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -1314,7 +1327,7 @@ abstract class GuiObject extends GuiBase2d {
         this.active = params.active ?? false;
         this.anchorPoint = params.anchorPoint ?? Vector2.zero;
         this.automaticSize = params.automaticSize ?? AutomaticSize.none;
-        this.backgroundColor = params.backgroundColor ?? new Color3(255, 255, 255);
+        this.backgroundColor3 = params.backgroundColor3 ?? new Color3(255, 255, 255);
         this.backgroundTransparency = params.backgroundTransparency ?? 0;
         this.borderColor3 = params.borderColor3 ?? new Color3(0, 0, 0);
         this.borderMode = params.borderMode ?? BorderMode.outline;
@@ -1342,7 +1355,7 @@ abstract class GuiObject extends GuiBase2d {
         ${variableName}.Active = ${this.active}
         ${variableName}.AnchorPoint = ${this.anchorPoint.toCode()}
         ${variableName}.AutomaticSize = ${toCode(this.automaticSize)}
-        ${variableName}.BackgroundColor = ${this.backgroundColor.toCode()}
+        ${variableName}.BackgroundColor3 = ${this.backgroundColor3.toCode()}
         ${variableName}.BackgroundTransparency = ${this.backgroundTransparency}
         ${variableName}.BorderColor3 = ${this.borderColor3.toCode()}
         ${variableName}.BorderMode = ${toCode(this.borderMode)}
@@ -1389,7 +1402,7 @@ abstract class GuiButton extends GuiObject {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -1432,7 +1445,7 @@ abstract class GuiButton extends GuiObject {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -1489,7 +1502,7 @@ export class Frame extends GuiObject {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -1529,7 +1542,7 @@ export class Frame extends GuiObject {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -1594,7 +1607,7 @@ export class ScrollingFrame extends GuiObject {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -1648,7 +1661,7 @@ export class ScrollingFrame extends GuiObject {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -1731,7 +1744,7 @@ export class VideoFrame extends GuiObject {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -1775,7 +1788,7 @@ export class VideoFrame extends GuiObject {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -1839,7 +1852,7 @@ export class ViewportFrame extends GuiObject {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -1884,7 +1897,7 @@ export class ViewportFrame extends GuiObject {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -1954,7 +1967,7 @@ abstract class ImageObject extends GuiObject {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -2003,7 +2016,7 @@ abstract class ImageObject extends GuiObject {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -2070,7 +2083,7 @@ export class ImageLabel extends ImageObject {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -2119,7 +2132,7 @@ export class ImageLabel extends ImageObject {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -2179,7 +2192,7 @@ export class ImageButton extends ImageObject implements GuiButton {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -2236,7 +2249,7 @@ export class ImageButton extends ImageObject implements GuiButton {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -2325,7 +2338,7 @@ abstract class TextObject extends GuiObject {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -2381,7 +2394,7 @@ abstract class TextObject extends GuiObject {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -2462,7 +2475,7 @@ export class TextLabel extends TextObject {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -2518,7 +2531,7 @@ export class TextLabel extends TextObject {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -2583,7 +2596,7 @@ export class TextButton extends TextObject implements GuiButton {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -2644,7 +2657,7 @@ export class TextButton extends TextObject implements GuiButton {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -2726,7 +2739,7 @@ export class TextBox extends TextObject {
         active?: boolean,
         anchorPoint?: Vector2,
         automaticSize?: AutomaticSize,
-        backgroundColor?: Color3,
+        backgroundColor3?: Color3,
         backgroundTransparency?: number,
         borderColor3?: Color3,
         borderMode?: BorderMode,
@@ -2792,7 +2805,7 @@ export class TextBox extends TextObject {
             active: params.active,
             anchorPoint: params.anchorPoint,
             automaticSize: params.automaticSize,
-            backgroundColor: params.backgroundColor,
+            backgroundColor3: params.backgroundColor3,
             backgroundTransparency: params.backgroundTransparency,
             borderColor3: params.borderColor3,
             borderMode: params.borderMode,
@@ -2855,6 +2868,17 @@ export class TextBox extends TextObject {
         `;
     }
 }
+
+export declare type RobloxUI = 
+    | Frame 
+    | ScrollingFrame
+    | VideoFrame
+    | ViewportFrame
+    | ImageLabel
+    | ImageButton
+    | TextLabel
+    | TextButton
+    | TextBox;
 
 abstract class UIBase extends Instance {
     constructor(params: {

@@ -2,13 +2,13 @@
   "name": "BloxUI",
   "id": "1437513441858155911",
   "api": "1.0.0",
-  "main": "code.js",
+  "main": "dist/code.js",
   "capabilities": [
     "codegen",
     "vscode"
   ],
   "codegenLanguages": [
-    {"label": "Lua", "value": "lua"}
+    {"label": "Typescript", "value": "typescript"}
   ],
   "codegenPreferences": [
     {
@@ -16,24 +16,7 @@
       "scaledUnit": "Rem",
       "defaultScaleFactor": 16,
       "default": true,
-      "includedLanguages": ["lua"]
-    },
-    {
-      "itemType": "select",
-        "propertyName": "tabSize",
-        "label": "Tab Size",
-        "options": [
-          {"label": "2", "value": "2", "isDefault": true },
-          {"label": "4", "value": "4"},
-          {"label": "8", "value": "8"}
-        ],
-        "includedLanguages": ["lua"]
-    },
-    {
-        "itemType": "action",
-        "propertyName": "showMore",
-        "label": "More settings...",
-        "includedLanguages": ["lua"]
+      "includedLanguages": ["typescript"]
     }
   ],
   "enableProposedApi": false,

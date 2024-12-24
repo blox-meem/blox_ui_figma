@@ -1,9 +1,7 @@
-import { Client } from 'pg';
-import express from 'express';
-import { BloxF2RLanguages, convertToCode, convertToCodeText, convertToObject } from './src/convert';
-import { downloadFile } from './src/download';
-import { validate } from './src/validation';
-import { CodeConvertionError, DownloadError, NavigationError, ObjectConvertionError, UnhandledKeyError, ValidationError } from './src/errors';
+import { BloxF2RLanguages, convertToCode, convertToCodeText, convertToObject } from './convert';
+import { downloadFile } from './download';
+import { validate } from './validation';
+import { CodeConvertionError, DownloadError, NavigationError, ObjectConvertionError, UnhandledKeyError, ValidationError } from './errors';
 
 /*
 
@@ -19,7 +17,11 @@ app.listen(process.env.PORT || 3000);
 
 */
 
-figma.showUI(__html__, {width: 400, height: 250, visible: true});
+figma.showUI(__html__, {
+  width: 700,
+  height: 500,
+  visible: true,
+});
 
 figma.ui.onmessage =  async (msg: {type: string, value?: string}) => {
   const currentPage = figma.currentPage;
@@ -77,7 +79,6 @@ figma.ui.onmessage =  async (msg: {type: string, value?: string}) => {
 
     }
   }
-  figma.closePlugin();
 };
 
 figma.codegen.on("generate", (_: CodegenEvent) => {

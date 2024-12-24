@@ -1186,6 +1186,7 @@ class RobloxPropertyParser {
 
 declare type FigmaColors = Paint;
 
+/*
 export function toRobloxColor(figmaColor: FigmaColors): Color3 | ColorSequence {
     switch (figmaColor.type) {
         case "SOLID":
@@ -1202,7 +1203,7 @@ export function toRobloxColor(figmaColor: FigmaColors): Color3 | ColorSequence {
             throw Error("Unimplemented Figma paint type");
     }
 }
-
+*/
 declare type ImageNode = { type: "IMAGE", data: Uint8Array };
 
 declare type VideoNode = { type: "VIDEO", data: Uint8Array };
@@ -1474,7 +1475,7 @@ export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects, scre
             return new Frame({
                 parent: screenGui,
                 //
-                backgroundColor: rectangleFrameObject.fills[0]
+                // backgroundColor: rectangleFrameObject.fills[0]
             });
         case "SCROLLINGFRAME":
             const scrollingFrameObject: FigmaRectangle = (figmaObject as FigmaRectangle);

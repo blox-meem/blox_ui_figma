@@ -385,7 +385,7 @@ export enum ScaleType {
     crop
 }
 
-export class Rect implements RobloxGlobalObject {
+export class RobloxRect implements RobloxGlobalObject {
     min: Vector2;
     max: Vector2;
 
@@ -1247,7 +1247,7 @@ export abstract class GuiBase3d extends GuiBase {
     }
 }
 
-abstract class GuiObject extends GuiBase2d {
+export abstract class GuiObject extends GuiBase2d {
     active: boolean;
     anchorPoint: Vector2;
     automaticSize: AutomaticSize;
@@ -1424,10 +1424,10 @@ abstract class GuiButton extends GuiObject {
         visible?: boolean,
         zIndex?: number,
         //
-        autoButtonColor: boolean,
-        modal: boolean,
-        selected: boolean,
-        style: ButtonStyle,
+        autoButtonColor?: boolean,
+        modal?: boolean,
+        selected?: boolean,
+        style?: ButtonStyle,
     }) {
         super({
             archivable: params.archivable,
@@ -1947,7 +1947,7 @@ abstract class ImageObject extends GuiObject {
     imageTransparency: number;
     resampleMode: ResamplerMode;
     scaleType: ScaleType;
-    sliceCenter: Rect;
+    sliceCenter: RobloxRect;
     sliceScale: number;
     tileSize: UDim2;
 
@@ -1996,7 +1996,7 @@ abstract class ImageObject extends GuiObject {
         imageTransparency?: number,
         resampleMode?: ResamplerMode,
         scaleType?: ScaleType,
-        sliceCenter?: Rect,
+        sliceCenter?: RobloxRect,
         sliceScale?: number,
         tileSize?: UDim2,
     }) {
@@ -2045,7 +2045,7 @@ abstract class ImageObject extends GuiObject {
         this.imageTransparency = params.imageTransparency ?? 0;
         this.resampleMode = params.resampleMode ?? ResamplerMode.default;
         this.scaleType = params.scaleType ?? ScaleType.stretch;
-        this.sliceCenter = params.sliceCenter ?? new Rect(Vector2.zero, Vector2.zero);
+        this.sliceCenter = params.sliceCenter ?? new RobloxRect(Vector2.zero, Vector2.zero);
         this.sliceScale = params.sliceScale ?? 1;
         this.tileSize = params.tileSize ?? new UDim2(1, 0, 1, 0);
     }
@@ -2112,7 +2112,7 @@ export class ImageLabel extends ImageObject {
         imageTransparency?: number,
         resampleMode?: ResamplerMode,
         scaleType?: ScaleType,
-        sliceCenter?: Rect,
+        sliceCenter?: RobloxRect,
         sliceScale?: number,
         tileSize?: UDim2,
     }) {
@@ -2221,7 +2221,7 @@ export class ImageButton extends ImageObject implements GuiButton {
         imageTransparency?: number,
         resampleMode?: ResamplerMode,
         scaleType?: ScaleType,
-        sliceCenter?: Rect,
+        sliceCenter?: RobloxRect,
         sliceScale?: number,
         tileSize?: UDim2,
         //

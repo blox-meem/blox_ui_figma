@@ -10,15 +10,10 @@ import {
     GuiBase, 
     ImageButton, 
     ImageLabel, 
-    Instance,
-    LocalizationTable, 
     RobloxUI, 
-    SafeAreaCompatibility, 
     ScreenGui,
     ScreenGuiProperties,
-    ScreenInsets, 
     ScrollingFrame, 
-    SelectionBehavior,
     TextBox, 
     TextButton, 
     TextLabel, 
@@ -45,6 +40,7 @@ import {
     ZIndexBehaviour 
 } from "./lua";
 import { processNestedNodes, SelectedComponentMap, SelectedNodeMap, selectedNodes } from "./structure";
+import { ExternalFrameProperties, ExternalImageButtonProperties, ExternalImageLabelProperties, ExternalRobloxProperties, ExternalScrollingFrameProperties, ExternalTextBoxProperties, ExternalTextButtonProperties, ExternalTextLabelProperties, ExternalVideoFrameProperties, ExternalViewportFrameProperties } from "./input";
 
 
 export enum BloxF2RLanguages {
@@ -1254,7 +1250,7 @@ export const ignorableProperties: Array<string> = [
     "CURRENTCAMERA",
     "LIGHTCOLOR",
     "LIGHTDIRECTION",
-    // ImageLabel
+    // ImageLabel & ImageButton
     "IMAGERECTOFFSET",
     "IMAGERECTSIZE",
     "RESAMPLEMODE",
@@ -1721,11 +1717,43 @@ function textYAllignment(textAlignVertical: TextAlignVertical): TextYAlignment {
     }
 }
 
-export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): GuiBase {
+export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects, externalProperties?: ExternalRobloxProperties): GuiBase {
     switch (figmaObject.figmaObjectType) {
         case "FRAME":
             const rectangleFrameObject: FigmaRectangle = (figmaObject as FigmaRectangle);
+            const externalFrameProperties = externalProperties as ExternalFrameProperties;
             return new Frame({
+                archivable: externalFrameProperties.archivable, 
+                //
+                autoLocalize: externalFrameProperties.autoLocalize,
+                rootLocalizationTable: externalFrameProperties.rootLocalizationTable,
+                selectionBehaviorDown: externalFrameProperties.selectionBehaviorDown,
+                selectionBehaviorLeft: externalFrameProperties.selectionBehaviorLeft,
+                selectionBehaviorRight: externalFrameProperties.selectionBehaviorRight,
+                selectionBehaviorUp: externalFrameProperties.selectionBehaviorUp,
+                selectionGroup: externalFrameProperties.selectionGroup,
+                //
+                active: externalFrameProperties.active,
+                anchorPoint: externalFrameProperties.anchorPoint,
+                automaticSize: externalFrameProperties.automaticSize,
+                borderColor3: externalFrameProperties.borderColor3,
+                borderMode: externalFrameProperties.borderMode,
+                borderSizePixel: externalFrameProperties.borderSizePixel,
+                interactable: externalFrameProperties.interactable,
+                layoutOrder: externalFrameProperties.layoutOrder,
+                nextSelectionDown: externalFrameProperties.nextSelectionDown,
+                nextSelectionLeft: externalFrameProperties.nextSelectionLeft,
+                nextSelectionRight: externalFrameProperties.nextSelectionRight,
+                nextSelectionUp: externalFrameProperties.nextSelectionUp,
+                selectable: externalFrameProperties.selectable,
+                selectionImageObject: externalFrameProperties.selectionImageObject,
+                selectionOrder: externalFrameProperties.selectionOrder,
+                sizeConstraint: externalFrameProperties.sizeConstraint,
+                zIndex: externalFrameProperties.zIndex,
+                //
+                style: externalFrameProperties.framestyle,
+                //
+                name: rectangleFrameObject.name,
                 //
                 backgroundColor3: toRobloxColor(rectangleFrameObject.fills[0]) as Color3,
                 backgroundTransparency: rectangleFrameObject.opacity,
@@ -1734,7 +1762,53 @@ export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): Gui
             });
         case "SCROLLINGFRAME":
             const scrollingFrameObject: FigmaRectangle = (figmaObject as FigmaRectangle);
+            const externalScrollingFrameProperties = externalProperties as ExternalScrollingFrameProperties;
             return new ScrollingFrame({
+                archivable: externalScrollingFrameProperties.archivable,
+                //
+                autoLocalize: externalScrollingFrameProperties.autoLocalize,
+                rootLocalizationTable: externalScrollingFrameProperties.rootLocalizationTable,
+                selectionBehaviorDown: externalScrollingFrameProperties.selectionBehaviorDown,
+                selectionBehaviorLeft: externalScrollingFrameProperties.selectionBehaviorLeft,
+                selectionBehaviorRight: externalScrollingFrameProperties.selectionBehaviorRight,
+                selectionBehaviorUp: externalScrollingFrameProperties.selectionBehaviorUp,
+                selectionGroup: externalScrollingFrameProperties.selectionGroup,
+                //
+                active: externalScrollingFrameProperties.active,
+                anchorPoint: externalScrollingFrameProperties.anchorPoint,
+                automaticSize: externalScrollingFrameProperties.automaticSize,
+                borderColor3: externalScrollingFrameProperties.borderColor3,
+                borderMode: externalScrollingFrameProperties.borderMode,
+                borderSizePixel: externalScrollingFrameProperties.borderSizePixel,
+                interactable: externalScrollingFrameProperties.interactable,
+                layoutOrder: externalScrollingFrameProperties.layoutOrder,
+                nextSelectionDown: externalScrollingFrameProperties.nextSelectionDown,
+                nextSelectionLeft: externalScrollingFrameProperties.nextSelectionLeft,
+                nextSelectionRight: externalScrollingFrameProperties.nextSelectionRight,
+                nextSelectionUp: externalScrollingFrameProperties.nextSelectionUp,
+                selectable: externalScrollingFrameProperties.selectable,
+                selectionImageObject: externalScrollingFrameProperties.selectionImageObject,
+                selectionOrder: externalScrollingFrameProperties.selectionOrder,
+                sizeConstraint: externalScrollingFrameProperties.sizeConstraint,
+                zIndex: externalScrollingFrameProperties.zIndex,
+                //
+                automaticCanvasSize: externalScrollingFrameProperties.automaticCanvasSize,
+                bottomImage: externalScrollingFrameProperties.bottomImage,
+                canvasPosition: externalScrollingFrameProperties.canvasPosition,
+                elasticBehavior: externalScrollingFrameProperties.elasticBehavior,
+                horizontalScrollBarInset: externalScrollingFrameProperties.horizontalScrollBarInset,
+                midImage: externalScrollingFrameProperties.midImage,
+                scrollBarImageColor3: externalScrollingFrameProperties.scrollBarImageColor3,
+                scrollBarImageTransparency: externalScrollingFrameProperties.scrollBarImageTransparency,
+                scrollBarThickness: externalScrollingFrameProperties.scrollBarThickness,
+                scrollingDirection: externalScrollingFrameProperties.scrollingDirection,
+                scrollingEnabled: externalScrollingFrameProperties.scrollingEnabled,
+                topImage: externalScrollingFrameProperties.topImage,
+                verticalScrollBarInset: externalScrollingFrameProperties.verticalScrollBarInset,
+                verticalScrollBarPosition: externalScrollingFrameProperties.verticalScrollBarPosition,
+                //
+                name: scrollingFrameObject.name,
+                //
                 backgroundColor3: toRobloxColor(scrollingFrameObject.fills[0]) as Color3,
                 backgroundTransparency: scrollingFrameObject.opacity,
                 size: new UDim2(),
@@ -1744,7 +1818,43 @@ export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): Gui
             });
         case "VIEWPORTFRAME":
             const viewportFrameObject: FigmaRectangle = (figmaObject as FigmaRectangle);
+            const externalViewportFrameProperties = externalProperties as ExternalViewportFrameProperties;
             return new ViewportFrame({
+                archivable: externalViewportFrameProperties.archivable,
+                //
+                autoLocalize: externalViewportFrameProperties.autoLocalize,
+                rootLocalizationTable: externalViewportFrameProperties.rootLocalizationTable,
+                selectionBehaviorDown: externalViewportFrameProperties.selectionBehaviorDown,
+                selectionBehaviorLeft: externalViewportFrameProperties.selectionBehaviorLeft,
+                selectionBehaviorRight: externalViewportFrameProperties.selectionBehaviorRight,
+                selectionBehaviorUp: externalViewportFrameProperties.selectionBehaviorUp,
+                selectionGroup: externalViewportFrameProperties.selectionGroup,
+                //
+                active: externalViewportFrameProperties.active,
+                anchorPoint: externalViewportFrameProperties.anchorPoint,
+                automaticSize: externalViewportFrameProperties.automaticSize,
+                borderColor3: externalViewportFrameProperties.borderColor3,
+                borderMode: externalViewportFrameProperties.borderMode,
+                borderSizePixel: externalViewportFrameProperties.borderSizePixel,
+                interactable: externalViewportFrameProperties.interactable,
+                layoutOrder: externalViewportFrameProperties.layoutOrder,
+                nextSelectionDown: externalViewportFrameProperties.nextSelectionDown,
+                nextSelectionLeft: externalViewportFrameProperties.nextSelectionLeft,
+                nextSelectionRight: externalViewportFrameProperties.nextSelectionRight,
+                nextSelectionUp: externalViewportFrameProperties.nextSelectionUp,
+                selectable: externalViewportFrameProperties.selectable,
+                selectionImageObject: externalViewportFrameProperties.selectionImageObject,
+                selectionOrder: externalViewportFrameProperties.selectionOrder,
+                sizeConstraint: externalViewportFrameProperties.sizeConstraint,
+                zIndex: externalViewportFrameProperties.zIndex,
+                //
+                ambient: externalViewportFrameProperties.ambient,
+                currentCamera: externalViewportFrameProperties.currentCamera,
+                lightColor: externalViewportFrameProperties.lightColor,
+                lightDirection: externalViewportFrameProperties.lightDirection,
+                //
+                name: viewportFrameObject.name,
+                //
                 backgroundColor3: toRobloxColor(viewportFrameObject.fills[0]) as Color3,
                 backgroundTransparency: viewportFrameObject.opacity,
                 size: new UDim2(),
@@ -1755,7 +1865,43 @@ export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): Gui
             });
         case "VIDEOFRAME":
             const videoFrameObject: FigmaVideo = (figmaObject as FigmaVideo);
+            const externalVideoFrameProperties = externalProperties as ExternalVideoFrameProperties;
             return new VideoFrame({
+                archivable: externalVideoFrameProperties.archivable,
+                //
+                autoLocalize: externalVideoFrameProperties.autoLocalize,
+                rootLocalizationTable: externalVideoFrameProperties.rootLocalizationTable,
+                selectionBehaviorDown: externalVideoFrameProperties.selectionBehaviorDown,
+                selectionBehaviorLeft: externalVideoFrameProperties.selectionBehaviorLeft,
+                selectionBehaviorRight: externalVideoFrameProperties.selectionBehaviorRight,
+                selectionBehaviorUp: externalVideoFrameProperties.selectionBehaviorUp,
+                selectionGroup: externalVideoFrameProperties.selectionGroup,
+                //
+                active: externalVideoFrameProperties.active,
+                anchorPoint: externalVideoFrameProperties.anchorPoint,
+                automaticSize: externalVideoFrameProperties.automaticSize,
+                borderColor3: externalVideoFrameProperties.borderColor3,
+                borderMode: externalVideoFrameProperties.borderMode,
+                borderSizePixel: externalVideoFrameProperties.borderSizePixel,
+                interactable: externalVideoFrameProperties.interactable,
+                layoutOrder: externalVideoFrameProperties.layoutOrder,
+                nextSelectionDown: externalVideoFrameProperties.nextSelectionDown,
+                nextSelectionLeft: externalVideoFrameProperties.nextSelectionLeft,
+                nextSelectionRight: externalVideoFrameProperties.nextSelectionRight,
+                nextSelectionUp: externalVideoFrameProperties.nextSelectionUp,
+                selectable: externalVideoFrameProperties.selectable,
+                selectionImageObject: externalVideoFrameProperties.selectionImageObject,
+                selectionOrder: externalVideoFrameProperties.selectionOrder,
+                sizeConstraint: externalVideoFrameProperties.sizeConstraint,
+                zIndex: externalVideoFrameProperties.zIndex,
+                //
+                looped: externalVideoFrameProperties.looped,
+                playing: externalVideoFrameProperties.playing,
+                timePosition: externalVideoFrameProperties.timePosition,
+                volume: externalVideoFrameProperties.volume,
+                //
+                name: videoFrameObject.name,
+                //
                 backgroundColor3: toRobloxColor(videoFrameObject.fills[0]) as Color3,
                 backgroundTransparency: videoFrameObject.opacity,
                 size: new UDim2(),
@@ -1765,7 +1911,46 @@ export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): Gui
             });
         case "IMAGELABEL":
             const imageLabelObject: FigmaImage = (figmaObject as FigmaImage);
+            const externalImageLabelProperties = externalProperties as ExternalImageLabelProperties;
             return new ImageLabel({
+                archivable: externalImageLabelProperties.archivable,
+                //
+                autoLocalize: externalImageLabelProperties.autoLocalize,
+                rootLocalizationTable: externalImageLabelProperties.rootLocalizationTable,
+                selectionBehaviorDown: externalImageLabelProperties.selectionBehaviorDown,
+                selectionBehaviorLeft: externalImageLabelProperties.selectionBehaviorLeft,
+                selectionBehaviorRight: externalImageLabelProperties.selectionBehaviorRight,
+                selectionBehaviorUp: externalImageLabelProperties.selectionBehaviorUp,
+                selectionGroup: externalImageLabelProperties.selectionGroup,
+                //
+                active: externalImageLabelProperties.active,
+                anchorPoint: externalImageLabelProperties.anchorPoint,
+                automaticSize: externalImageLabelProperties.automaticSize,
+                borderColor3: externalImageLabelProperties.borderColor3,
+                borderMode: externalImageLabelProperties.borderMode,
+                borderSizePixel: externalImageLabelProperties.borderSizePixel,
+                interactable: externalImageLabelProperties.interactable,
+                layoutOrder: externalImageLabelProperties.layoutOrder,
+                nextSelectionDown: externalImageLabelProperties.nextSelectionDown,
+                nextSelectionLeft: externalImageLabelProperties.nextSelectionLeft,
+                nextSelectionRight: externalImageLabelProperties.nextSelectionRight,
+                nextSelectionUp: externalImageLabelProperties.nextSelectionUp,
+                selectable: externalImageLabelProperties.selectable,
+                selectionImageObject: externalImageLabelProperties.selectionImageObject,
+                selectionOrder: externalImageLabelProperties.selectionOrder,
+                sizeConstraint: externalImageLabelProperties.sizeConstraint,
+                zIndex: externalImageLabelProperties.zIndex,
+                //
+                imageRectOffset: externalImageLabelProperties.imageRectOffset,
+                imageRectSize: externalImageLabelProperties.imageRectSize,
+                resampleMode: externalImageLabelProperties.resampleMode,
+                scaleType: externalImageLabelProperties.scaleType,
+                sliceCenter: externalImageLabelProperties.sliceCenter,
+                sliceScale: externalImageLabelProperties.sliceScale,
+                tileSize: externalImageLabelProperties.tileSize,
+                //
+                name: imageLabelObject.name,
+                //
                 backgroundColor3: toRobloxColor(imageLabelObject.fills[0]) as Color3,
                 backgroundTransparency: imageLabelObject.opacity,
                 size: new UDim2(),
@@ -1775,7 +1960,51 @@ export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): Gui
             });
         case "IMAGEBUTTON":
             const imageButtonObject: FigmaImage = (figmaObject as FigmaImage);
+            const externalImageButtonProperties = externalProperties as ExternalImageButtonProperties;
             return new ImageButton({
+                archivable: externalImageButtonProperties.archivable,
+                //
+                autoLocalize: externalImageButtonProperties.autoLocalize,
+                rootLocalizationTable: externalImageButtonProperties.rootLocalizationTable,
+                selectionBehaviorDown: externalImageButtonProperties.selectionBehaviorDown,
+                selectionBehaviorLeft: externalImageButtonProperties.selectionBehaviorLeft,
+                selectionBehaviorRight: externalImageButtonProperties.selectionBehaviorRight,
+                selectionBehaviorUp: externalImageButtonProperties.selectionBehaviorUp,
+                selectionGroup: externalImageButtonProperties.selectionGroup,
+                //
+                active: externalImageButtonProperties.active,
+                anchorPoint: externalImageButtonProperties.anchorPoint,
+                automaticSize: externalImageButtonProperties.automaticSize,
+                borderColor3: externalImageButtonProperties.borderColor3,
+                borderMode: externalImageButtonProperties.borderMode,
+                borderSizePixel: externalImageButtonProperties.borderSizePixel,
+                interactable: externalImageButtonProperties.interactable,
+                layoutOrder: externalImageButtonProperties.layoutOrder,
+                nextSelectionDown: externalImageButtonProperties.nextSelectionDown,
+                nextSelectionLeft: externalImageButtonProperties.nextSelectionLeft,
+                nextSelectionRight: externalImageButtonProperties.nextSelectionRight,
+                nextSelectionUp: externalImageButtonProperties.nextSelectionUp,
+                selectable: externalImageButtonProperties.selectable,
+                selectionImageObject: externalImageButtonProperties.selectionImageObject,
+                selectionOrder: externalImageButtonProperties.selectionOrder,
+                sizeConstraint: externalImageButtonProperties.sizeConstraint,
+                zIndex: externalImageButtonProperties.zIndex,
+                //
+                autoButtonColor: externalImageButtonProperties.autoButtonColor,
+                modal: externalImageButtonProperties.modal,
+                selected: externalImageButtonProperties.selected,
+                style: externalImageButtonProperties.buttonstyle,
+                //
+                imageRectOffset: externalImageButtonProperties.imageRectOffset,
+                imageRectSize: externalImageButtonProperties.imageRectSize,
+                resampleMode: externalImageButtonProperties.resampleMode,
+                scaleType: externalImageButtonProperties.scaleType,
+                sliceCenter: externalImageButtonProperties.sliceCenter,
+                sliceScale: externalImageButtonProperties.sliceScale,
+                tileSize: externalImageButtonProperties.tileSize,
+                //
+                name: imageButtonObject.name,
+                //
                 backgroundColor3: toRobloxColor(imageButtonObject.fills[0]) as Color3,
                 backgroundTransparency: imageButtonObject.opacity,
                 size: new UDim2(),
@@ -1786,7 +2015,56 @@ export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): Gui
         case "TEXTBOX":
             const textBoxObject: FigmaText = (figmaObject as FigmaText);
             const textBoxStyle = textBoxObject.textStyle;
+            const externalTextBoxProperties = externalProperties as ExternalTextBoxProperties;
             return new TextBox({
+                archivable: externalTextBoxProperties.archivable,
+                //
+                autoLocalize: externalTextBoxProperties.autoLocalize,
+                rootLocalizationTable: externalTextBoxProperties.rootLocalizationTable,
+                selectionBehaviorDown: externalTextBoxProperties.selectionBehaviorDown,
+                selectionBehaviorLeft: externalTextBoxProperties.selectionBehaviorLeft,
+                selectionBehaviorRight: externalTextBoxProperties.selectionBehaviorRight,
+                selectionBehaviorUp: externalTextBoxProperties.selectionBehaviorUp,
+                selectionGroup: externalTextBoxProperties.selectionGroup,
+                //
+                active: externalTextBoxProperties.active,
+                anchorPoint: externalTextBoxProperties.anchorPoint,
+                automaticSize: externalTextBoxProperties.automaticSize,
+                borderColor3: externalTextBoxProperties.borderColor3,
+                borderMode: externalTextBoxProperties.borderMode,
+                borderSizePixel: externalTextBoxProperties.borderSizePixel,
+                interactable: externalTextBoxProperties.interactable,
+                layoutOrder: externalTextBoxProperties.layoutOrder,
+                nextSelectionDown: externalTextBoxProperties.nextSelectionDown,
+                nextSelectionLeft: externalTextBoxProperties.nextSelectionLeft,
+                nextSelectionRight: externalTextBoxProperties.nextSelectionRight,
+                nextSelectionUp: externalTextBoxProperties.nextSelectionUp,
+                selectable: externalTextBoxProperties.selectable,
+                selectionImageObject: externalTextBoxProperties.selectionImageObject,
+                selectionOrder: externalTextBoxProperties.selectionOrder,
+                sizeConstraint: externalTextBoxProperties.sizeConstraint,
+                zIndex: externalTextBoxProperties.zIndex,
+                //
+                maxVisibleGraphemes: externalTextBoxProperties.maxVisibleGraphemes,
+                openTypeFeatures: externalTextBoxProperties.openTypeFeatures,
+                richText: externalTextBoxProperties.richText,
+                textDirection: externalTextBoxProperties.textDirection,
+                textScaled: externalTextBoxProperties.textScaled,
+                textStrokeColor: externalTextBoxProperties.textStrokeColor,
+                textStrokeTransparency: externalTextBoxProperties.textStrokeTransparency,
+                textWrapped: externalTextBoxProperties.textWrapped,
+                //
+                clearTextFocus: externalTextBoxProperties.clearTextFocus,
+                cursorPosition: externalTextBoxProperties.cursorPosition,
+                multiLine: externalTextBoxProperties.multiLine,
+                placeholderColor3: externalTextBoxProperties.placeholderColor3,
+                placeholderText: externalTextBoxProperties.placeholderText,
+                selectionStart: externalTextBoxProperties.selectionStart,
+                showNativeInput: externalTextBoxProperties.showNativeInput,
+                textEditable: externalTextBoxProperties.textEditable,
+                //
+                name: textBoxObject.name,
+                //
                 backgroundColor3: toRobloxColor(textBoxObject.fills[0]) as Color3,
                 backgroundTransparency: textBoxObject.opacity,
                 size: new UDim2(),
@@ -1811,7 +2089,52 @@ export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): Gui
         case "TEXTBUTTON":
             const textButtonObject: FigmaText = (figmaObject as FigmaText);
             const textButtonStyle = textButtonObject.textStyle;
+            const externalTextButtonProperties = externalProperties as ExternalTextButtonProperties;
             return new TextButton({
+                archivable: externalTextButtonProperties.archivable,
+                //
+                autoLocalize: externalTextButtonProperties.autoLocalize,
+                rootLocalizationTable: externalTextButtonProperties.rootLocalizationTable,
+                selectionBehaviorDown: externalTextButtonProperties.selectionBehaviorDown,
+                selectionBehaviorLeft: externalTextButtonProperties.selectionBehaviorLeft,
+                selectionBehaviorRight: externalTextButtonProperties.selectionBehaviorRight,
+                selectionBehaviorUp: externalTextButtonProperties.selectionBehaviorUp,
+                selectionGroup: externalTextButtonProperties.selectionGroup,
+                //
+                active: externalTextButtonProperties.active,
+                anchorPoint: externalTextButtonProperties.anchorPoint,
+                automaticSize: externalTextButtonProperties.automaticSize,
+                borderColor3: externalTextButtonProperties.borderColor3,
+                borderMode: externalTextButtonProperties.borderMode,
+                borderSizePixel: externalTextButtonProperties.borderSizePixel,
+                interactable: externalTextButtonProperties.interactable,
+                layoutOrder: externalTextButtonProperties.layoutOrder,
+                nextSelectionDown: externalTextButtonProperties.nextSelectionDown,
+                nextSelectionLeft: externalTextButtonProperties.nextSelectionLeft,
+                nextSelectionRight: externalTextButtonProperties.nextSelectionRight,
+                nextSelectionUp: externalTextButtonProperties.nextSelectionUp,
+                selectable: externalTextButtonProperties.selectable,
+                selectionImageObject: externalTextButtonProperties.selectionImageObject,
+                selectionOrder: externalTextButtonProperties.selectionOrder,
+                sizeConstraint: externalTextButtonProperties.sizeConstraint,
+                zIndex: externalTextButtonProperties.zIndex,
+                //
+                autoButtonColor: externalTextButtonProperties.autoButtonColor,
+                modal: externalTextButtonProperties.modal,
+                selected: externalTextButtonProperties.selected,
+                style: externalTextButtonProperties.buttonstyle,
+                //
+                maxVisibleGraphemes: externalTextButtonProperties.maxVisibleGraphemes,
+                openTypeFeatures: externalTextButtonProperties.openTypeFeatures,
+                richText: externalTextButtonProperties.richText,
+                textDirection: externalTextButtonProperties.textDirection,
+                textScaled: externalTextButtonProperties.textScaled,
+                textStrokeColor: externalTextButtonProperties.textStrokeColor,
+                textStrokeTransparency: externalTextButtonProperties.textStrokeTransparency,
+                textWrapped: externalTextButtonProperties.textWrapped,
+                //
+                name: textButtonObject.name,
+                //
                 backgroundColor3: toRobloxColor(textButtonObject.fills[0]) as Color3,
                 backgroundTransparency: textButtonObject.opacity,
                 size: new UDim2(),
@@ -1836,7 +2159,47 @@ export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): Gui
         case "TEXTLABEL":
             const textLabelObject: FigmaText = (figmaObject as FigmaText);
             const textLabelStyle = textLabelObject.textStyle;
+            const externalTextLabelProperties = externalProperties as ExternalTextLabelProperties;
             return new TextLabel({
+                archivable: externalTextLabelProperties.archivable,
+                //
+                autoLocalize: externalTextLabelProperties.autoLocalize,
+                rootLocalizationTable: externalTextLabelProperties.rootLocalizationTable,
+                selectionBehaviorDown: externalTextLabelProperties.selectionBehaviorDown,
+                selectionBehaviorLeft: externalTextLabelProperties.selectionBehaviorLeft,
+                selectionBehaviorRight: externalTextLabelProperties.selectionBehaviorRight,
+                selectionBehaviorUp: externalTextLabelProperties.selectionBehaviorUp,
+                selectionGroup: externalTextLabelProperties.selectionGroup,
+                //
+                active: externalTextLabelProperties.active,
+                anchorPoint: externalTextLabelProperties.anchorPoint,
+                automaticSize: externalTextLabelProperties.automaticSize,
+                borderColor3: externalTextLabelProperties.borderColor3,
+                borderMode: externalTextLabelProperties.borderMode,
+                borderSizePixel: externalTextLabelProperties.borderSizePixel,
+                interactable: externalTextLabelProperties.interactable,
+                layoutOrder: externalTextLabelProperties.layoutOrder,
+                nextSelectionDown: externalTextLabelProperties.nextSelectionDown,
+                nextSelectionLeft: externalTextLabelProperties.nextSelectionLeft,
+                nextSelectionRight: externalTextLabelProperties.nextSelectionRight,
+                nextSelectionUp: externalTextLabelProperties.nextSelectionUp,
+                selectable: externalTextLabelProperties.selectable,
+                selectionImageObject: externalTextLabelProperties.selectionImageObject,
+                selectionOrder: externalTextLabelProperties.selectionOrder,
+                sizeConstraint: externalTextLabelProperties.sizeConstraint,
+                zIndex: externalTextLabelProperties.zIndex,
+                //
+                maxVisibleGraphemes: externalTextLabelProperties.maxVisibleGraphemes,
+                openTypeFeatures: externalTextLabelProperties.openTypeFeatures,
+                richText: externalTextLabelProperties.richText,
+                textDirection: externalTextLabelProperties.textDirection,
+                textScaled: externalTextLabelProperties.textScaled,
+                textStrokeColor: externalTextLabelProperties.textStrokeColor,
+                textStrokeTransparency: externalTextLabelProperties.textStrokeTransparency,
+                textWrapped: externalTextLabelProperties.textWrapped,
+                //
+                name: textLabelObject.name,
+                //
                 backgroundColor3: toRobloxColor(textLabelObject.fills[0]) as Color3,
                 backgroundTransparency: textLabelObject.opacity,
                 size: new UDim2(),
@@ -1860,7 +2223,38 @@ export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects): Gui
             });
         case "GROUP":
             const figmaGroupObject: FigmaGroup = (figmaObject as FigmaGroup);
+            const externalFrameAsGroupProperties = externalProperties as ExternalFrameProperties;
             return new Frame({
+                archivable: externalFrameAsGroupProperties.archivable,
+                //
+                autoLocalize: externalFrameAsGroupProperties.autoLocalize,
+                rootLocalizationTable: externalFrameAsGroupProperties.rootLocalizationTable,
+                selectionBehaviorDown: externalFrameAsGroupProperties.selectionBehaviorDown,
+                selectionBehaviorLeft: externalFrameAsGroupProperties.selectionBehaviorLeft,
+                selectionBehaviorRight: externalFrameAsGroupProperties.selectionBehaviorRight,
+                selectionBehaviorUp: externalFrameAsGroupProperties.selectionBehaviorUp,
+                selectionGroup: externalFrameAsGroupProperties.selectionGroup,
+                //
+                active: externalFrameAsGroupProperties.active,
+                anchorPoint: externalFrameAsGroupProperties.anchorPoint,
+                automaticSize: externalFrameAsGroupProperties.automaticSize,
+                borderColor3: externalFrameAsGroupProperties.borderColor3,
+                borderMode: externalFrameAsGroupProperties.borderMode,
+                borderSizePixel: externalFrameAsGroupProperties.borderSizePixel,
+                interactable: externalFrameAsGroupProperties.interactable,
+                layoutOrder: externalFrameAsGroupProperties.layoutOrder,
+                nextSelectionDown: externalFrameAsGroupProperties.nextSelectionDown,
+                nextSelectionLeft: externalFrameAsGroupProperties.nextSelectionLeft,
+                nextSelectionRight: externalFrameAsGroupProperties.nextSelectionRight,
+                nextSelectionUp: externalFrameAsGroupProperties.nextSelectionUp,
+                selectable: externalFrameAsGroupProperties.selectable,
+                selectionImageObject: externalFrameAsGroupProperties.selectionImageObject,
+                selectionOrder: externalFrameAsGroupProperties.selectionOrder,
+                sizeConstraint: externalFrameAsGroupProperties.sizeConstraint,
+                zIndex: externalFrameAsGroupProperties.zIndex,
+                //
+                name: figmaGroupObject.name,
+                //
                 backgroundColor3: toRobloxColor(figmaGroupObject.fills[0]) as Color3,
                 backgroundTransparency: figmaGroupObject.opacity,
                 size: new UDim2(),
@@ -1905,24 +2299,23 @@ function generateCode(selection: readonly SceneNode[], language: BloxF2RLanguage
     return '';
 }
 
-export default async function main(): Promise<void> {
+export default async function main(externalProperties: Map<String, ExternalRobloxProperties>): Promise<void> {
     const robloxObjectContainer: RobloxUI[] = [];
     processNestedNodes(async (nodeMap) => {
-        const parent = nodeMap.parent;
         if (nodeMap.type === 'FRAME') {
             const frameNode = nodeMap.affiliatedNode as FrameNode;
             const frameFigmaObject = await convertFigmaToFigmaObject(frameNode) as FigmaFrame;
-            const scrollingFrame = convertFigmaObjectToRobloxObject(frameFigmaObject) as ScrollingFrame;
+            const scrollingFrame = convertFigmaObjectToRobloxObject(frameFigmaObject, externalProperties.get(nodeMap.name)) as ScrollingFrame;
             robloxObjectContainer.push(scrollingFrame);
         } else if (nodeMap.type === 'RECTANGLE') {
             const rectangleNode = nodeMap.affiliatedNode as RectangleNode;
             const rectangleFigmaObject = await convertFigmaToFigmaObject(rectangleNode) as FigmaRectangle;
-            const frame = convertFigmaObjectToRobloxObject(rectangleFigmaObject) as Frame;
+            const frame = convertFigmaObjectToRobloxObject(rectangleFigmaObject, externalProperties.get(nodeMap.name)) as Frame;
             robloxObjectContainer.push(frame);
         } else if (nodeMap.type === 'ELLIPSE') {
             const ellipseNode = nodeMap.affiliatedNode as EllipseNode;
             const ellipseFigmaObject = await convertFigmaToFigmaObject(ellipseNode) as FigmaEllipse;
-            const frameAsEllipse = convertFigmaObjectToRobloxObject(ellipseFigmaObject) as Frame;
+            const frameAsEllipse = convertFigmaObjectToRobloxObject(ellipseFigmaObject, externalProperties.get(nodeMap.name)) as Frame;
             const uiCorner: UICorner = new UICorner({
                 cornerRadius: new UDim(0.5, 0),
             });
@@ -1931,7 +2324,7 @@ export default async function main(): Promise<void> {
         } else if (nodeMap.type === 'GROUP') {
             const groupNode = nodeMap.affiliatedNode as GroupNode;
             const groupFigmaObject = await convertFigmaToFigmaObject(groupNode) as FigmaGroup;
-            const frameAsGroup = convertFigmaObjectToRobloxObject(groupFigmaObject) as Frame;
+            const frameAsGroup = convertFigmaObjectToRobloxObject(groupFigmaObject, externalProperties.get(nodeMap.name)) as Frame;
             robloxObjectContainer.push(frameAsGroup);
         } else if (nodeMap.type === 'COMPONENT') {
             if (nodeMap instanceof SelectedComponentMap) {
@@ -1946,25 +2339,25 @@ export default async function main(): Promise<void> {
                     case "VIEWPORTFRAME":
                         const viewportFrameRectangleNode = mainInstance as RectangleNode;
                         const componentViewportFrameFigmaObject = await convertFigmaToFigmaObject(viewportFrameRectangleNode) as FigmaFrame;
-                        const viewportFrame = convertFigmaObjectToRobloxObject(componentViewportFrameFigmaObject) as ViewportFrame;
+                        const viewportFrame = convertFigmaObjectToRobloxObject(componentViewportFrameFigmaObject, externalProperties.get(nodeMap.name)) as ViewportFrame;
                         robloxObjectContainer.push(viewportFrame);
                         break;
                     case "IMAGEBUTTON":
                         const imageButtonRectangleNode = mainInstance as RectangleNode;
                         const componentImageButtonFigmaObject = await convertFigmaToFigmaObject(imageButtonRectangleNode) as FigmaFrame;
-                        const imageButton = convertFigmaObjectToRobloxObject(componentImageButtonFigmaObject) as ImageButton;
+                        const imageButton = convertFigmaObjectToRobloxObject(componentImageButtonFigmaObject, externalProperties.get(nodeMap.name)) as ImageButton;
                         robloxObjectContainer.push(imageButton);
                         break;
                     case "TEXTBUTTON":
                         const textButtonRectangleNode = mainInstance as TextNode;
                         const componentTextButtonFigmaObject = await convertFigmaToFigmaObject(textButtonRectangleNode) as FigmaVideo;
-                        const textButton = convertFigmaObjectToRobloxObject(componentTextButtonFigmaObject) as TextButton;
+                        const textButton = convertFigmaObjectToRobloxObject(componentTextButtonFigmaObject, externalProperties.get(nodeMap.name)) as TextButton;
                         robloxObjectContainer.push(textButton);
                         break;
                     case "TEXTBOX":
                         const textBoxRectangleNode = mainInstance as TextNode;
                         const componentTextBoxFigmaObject = await convertFigmaToFigmaObject(textBoxRectangleNode) as FigmaText;
-                        const textBox = convertFigmaObjectToRobloxObject(componentTextBoxFigmaObject) as TextBox;
+                        const textBox = convertFigmaObjectToRobloxObject(componentTextBoxFigmaObject, externalProperties.get(nodeMap.name)) as TextBox;
                         robloxObjectContainer.push(textBox);
                         break;
                     default:
@@ -1973,6 +2366,7 @@ export default async function main(): Promise<void> {
             }
         } 
     }); 
+
 
 }
 function checkValidRobloxType(defaultValue: string | boolean): any {

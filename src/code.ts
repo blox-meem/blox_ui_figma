@@ -1,21 +1,26 @@
-import { BloxF2RLanguages, convertToCode, convertToCodeText } from './convert';
-import { downloadFile } from './download';
-import { validate } from './validation';
-import { CodeConvertionError, DownloadError, NavigationError, ObjectConvertionError, UnhandledKeyError, ValidationError } from './errors';
+import main, { 
+  BloxF2RLanguages, 
+  ConvertRunType, 
+  convertToCode, 
+} from './convert';
 
-/*
+import { 
+  exportFile 
+} from './download';
 
-const app = express();
+import { 
+  validate 
+} from './validation';
 
-app.get("/", (req, res) => {
-  res.json({
-    user: "meemsoossaas",
-  });
-});
-
-app.listen(process.env.PORT || 3000);
-
-*/
+import { 
+  CodeConvertionError, 
+  DownloadError, 
+  NavigationError, 
+  ObjectConvertionError, 
+  UnhandledKeyError, 
+  ValidationError 
+} from './errors';
+import { ExternalRobloxProperties } from './input';
 
 figma.showUI(__html__, {
   width: 700,
@@ -36,7 +41,10 @@ figma.ui.onmessage =  async (msg: {type: string, value?: string}) => {
   }
   if (msg.type === 'convert-to-code') {
     try {
-      convertToCode(currentPage);
+      await main(
+        ConvertRunType.convertToCode, 
+        new Map<string, ExternalRobloxProperties>()
+      );
     } catch (error) {
       if (error instanceof CodeConvertionError) {}
     } finally {
@@ -45,20 +53,14 @@ figma.ui.onmessage =  async (msg: {type: string, value?: string}) => {
   }
   if (msg.type === 'convert-to-object') {
     try {
-
+      await main(
+        ConvertRunType.convertToObject,
+        new Map<string, ExternalRobloxProperties>(),
+      );
     } catch (error) {
       if (error instanceof ObjectConvertionError) {}
     } finally {
       figma.closePlugin();
-    }
-  }
-  if (msg.type === 'download') {
-    try {
-      await downloadFile(currentPage);
-    } catch (error) {
-      if (error instanceof DownloadError) {}
-    } finally {
-      
     }
   }
   if (msg.type === 'back-to-main') {
@@ -81,11 +83,4 @@ figma.ui.onmessage =  async (msg: {type: string, value?: string}) => {
   }
 };
 
-figma.codegen.on("generate", (_: CodegenEvent) => {
-  const page = figma.currentPage;
-  return [
-    convertToCodeText(page, BloxF2RLanguages.lua),
-    convertToCodeText(page, BloxF2RLanguages.bloxUI),
-    convertToCodeText(page, BloxF2RLanguages.dart),
-  ];
-});
+figma.codegen.on("generate",  async (_: CodegenEvent) => await main(ConvertRunType.generateCode, new Map<string, ExternalRobloxProperties>()) as CodegenResult[]);

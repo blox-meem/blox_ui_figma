@@ -1,5 +1,11 @@
-import { assert } from "console";
-import { TextAlignHorizontal, TextAlignVertical, TextAutoResize, TextTruncation } from "./convert";
+import { 
+    assert 
+} from "console";
+
+import { 
+    TextAutoResize, 
+    TextTruncation 
+} from "./convert";
 
 interface Size {
     width: number;
@@ -589,3 +595,46 @@ export declare type ProcessableNodes =
     | GroupNode
     | ComponentNode
     | TextNode;
+
+export class StringBuffer {
+    private buffer: string[] = [];
+
+    constructor();
+
+    constructor(content: string);
+
+    constructor(cnt?: string | undefined) {
+        if (typeof cnt === "string"){
+            this.buffer.push(cnt);
+        }
+    }
+
+    write(str: string): void {
+        this.buffer.push(str);
+    }
+
+    writeLn(str: string) {
+        this.buffer.push(str);
+        this.buffer.push("\n");
+    }
+
+    clear(): void {
+        this.buffer = [];
+    }
+
+    toString(): string {
+        return this.buffer.join("");
+    }
+}
+
+export function toCamelCase(str: string): string{
+    assert(str.length > 0);
+    const buffer: StringBuffer = new StringBuffer();
+    const strList: string[] = str.split("");
+    const firstLetter = strList[0];
+    buffer.write(firstLetter.toLowerCase());
+    for (var i: number = 1; i < strList.length; i++) {
+        buffer.write(strList[i]);
+    }
+    return buffer.toString();
+}

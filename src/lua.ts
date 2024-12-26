@@ -1,6 +1,10 @@
-import { assert } from "console";
+import { 
+    assert 
+} from "console";
 
 import tinycolor from 'tinycolor2';
+import { StringBuffer, toCamelCase } from "./structure";
+import { RBMXMFile, toRBXMX } from "./download";
 
 abstract class RobloxObject {}
 
@@ -8,17 +12,53 @@ interface RobloxCodeParser {
     toCode(variableName: string): string;
 }
 
-export abstract class Instance extends RobloxObject implements RobloxCodeParser{
+interface RBXMXCodeParser {
+    toRBXMXCode() : string;
+}
+
+export declare type RobloxClassName = 
+    | "LocalizationTable"
+    | "Camera"
+    | "ScreenGui"
+    //
+    | "UIAspectRatioConstraint"
+    | "UICorner"
+    | "UIFlexItem"
+    | "UIGradient"
+    | "UIGridLayout"
+    | "UIListLayout"
+    | "UIPadding"
+    | "UIPageLayout"
+    | "UIScale"
+    | "UISizeConstraint"
+    | "UIStroke"
+    | "UITableLayout"
+    | "UITextSizeConstraint"
+    //
+    | "Frame"
+    | "ScrollingFrame"
+    | "VideoFrame"
+    | "ViewportFrame"
+    | "ImageLabel"
+    | "ImageButton"
+    | "TextLabel"
+    | "TextButton"
+    | "TextBox";
+
+export abstract class Instance extends RobloxObject implements RobloxCodeParser {
+    className: RobloxClassName;
     archivable: boolean;
     name: string;
     parent?: Instance;
 
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
     }) {
         super();
+        this.className = params.className,
         this.archivable = params.archivable ?? true;
         this.name = params.name ?? 'Instance';
         this.parent = params.parent;
@@ -26,14 +66,15 @@ export abstract class Instance extends RobloxObject implements RobloxCodeParser{
 
     toCode(variableName: string): string {
         return `
+        local ${variableName} = Instance.new("${this.className}")
         ${variableName}.Archivable = ${this.archivable}
+        ${variableName}.Parent = ${typeof this.parent === "undefined" ? "nil" : `${toCamelCase(this.parent!.name)}`}
         ${variableName}.Name = "${this.name}"
-        ${variableName}.Parent = ${this.parent?.toCode(variableName) ?? "nil"}
         `.trim();
     }
 }
 
-export class LocalizationTable extends Instance {
+export class LocalizationTable extends Instance implements RBXMXCodeParser {
     sourceLocaleId: string;
 
     constructor(params: {
@@ -44,6 +85,7 @@ export class LocalizationTable extends Instance {
         sourceLocaleId?: string,
     }) {
         super({
+            className: "LocalizationTable",
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -56,6 +98,12 @@ export class LocalizationTable extends Instance {
         ${variableName}.SourceLocaleId ? "${this.sourceLocaleId}"
         `;
     }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim()
+        );
+    }
 }
 
 export enum SelectionBehavior {
@@ -65,6 +113,8 @@ export enum SelectionBehavior {
 
 interface RobloxGlobalObject {
     toCode(): string;
+
+    toRBXMXCode(propertyName: string): string;
 }
 
 export class Color3 implements RobloxGlobalObject {
@@ -73,7 +123,9 @@ export class Color3 implements RobloxGlobalObject {
     b: number;
 
     constructor(hex: string);
+
     constructor(r: number | string, g: number, b: number);
+    
     constructor(r?: number | string, g?: number, b?: number) {
         if (
             typeof r == "number" &&
@@ -104,9 +156,35 @@ export class Color3 implements RobloxGlobalObject {
     toCode(): string {
         return `Color3.fromRGB(${this.r}, ${this.g}, ${this.b})`;
     }
+
+    toRBXMXCode(propertyName: string): string {
+        return `
+        <Color3 name="${propertyName}">
+            <R>${Math.round(this.r/255)}</R>
+            <G>${Math.round(this.g/255)}</G>
+            <B>${Math.round(this.b/255)}</B>
+        </Color3>
+        `;
+    }
 }
 
-export class Vector2 implements RobloxGlobalObject {
+interface Vector<VECTOR> {
+    get length(): number;
+
+    get unit(): VECTOR;
+
+    get opposite(): VECTOR;
+
+    add(vec: VECTOR): VECTOR;
+
+    subtract(vec: VECTOR): VECTOR;
+
+    factor(factor: number): VECTOR;
+
+    divide(divisor: number): VECTOR;
+}
+
+export class Vector2 implements Vector<Vector2>, RobloxGlobalObject{
     static zero: Vector2 = new Vector2(0, 0);
     
     static one: Vector2 = new Vector2(1, 1);
@@ -118,8 +196,58 @@ export class Vector2 implements RobloxGlobalObject {
         this.x = x;
         this.y = y;
     }
+
+    get length(): number {
+        return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+    }
+
+    get unit(): Vector2 {
+        return this.divide(this.length);
+    }
+
+    get opposite(): Vector2 {
+        return new Vector2(-this.x, -this.y);
+    }
+
+    add(vec: Vector2): Vector2 {
+        return new Vector2(
+            this.x + vec.x,
+            this.y + vec.y,
+        );
+    }
+    
+    subtract(vec: Vector2): Vector2 {
+        return new Vector2(
+            this.x - vec.x,
+            this.y - vec.y,
+        );
+    }
+    
+    factor(factor: number): Vector2 {
+        return new Vector2(
+            factor * this.x,
+            factor * this.y,
+        );
+    }
+    
+    divide(divisor: number): Vector2 {
+        return new Vector2(
+            this.x/divisor,
+            this.y/divisor,
+        );
+    }
+
     toCode(): string {
         return `Vector.new(${this.x}, ${this.y})`;
+    }
+
+    toRBXMXCode(propertyName: string): string {
+        return `
+        <Vector2 name="${propertyName}">
+            <X>${this.x}</X>
+            <Y>${this.y}</Y>
+        </Vector2>
+        `;
     }
 }
 
@@ -147,6 +275,15 @@ export class UDim implements RobloxGlobalObject {
 
     toCode(): string {
         return `UDim.new(${this.scale}, ${this.offset})`;
+    }
+
+    toRBXMXCode(propertyName: string): string {
+        return `
+        <UDim name="${propertyName}">
+            <S>${this.scale}</S>
+            <O>${this.offset}</O>
+        </UDim>
+        `;
     }
 }
 
@@ -212,9 +349,19 @@ export class UDim2 implements RobloxGlobalObject {
         }
     }
 
-
     toCode(): string {
-        return `UDIm2.new(${this.x.scale}, ${this.x.offset}, ${this.y.scale}, ${this.y.offset})`;
+        return `UDim2.new(${this.x.scale}, ${this.x.offset}, ${this.y.scale}, ${this.y.offset})`;
+    }
+
+    toRBXMXCode(propertyName: string): string {
+        return `
+        <UDim2 name="${propertyName}">
+            <XS>${this.x.scale}</XS>
+            <XO>${this.x.offset}</XO>
+            <YS>${this.y.scale}</YS>
+            <YO>${this.y.offset}</YO>
+        </UDim2>
+        `;
     }
 }
 
@@ -266,23 +413,281 @@ export enum VerticalScrollBarPosition {
     left
 }
 
-export class CFrame implements RobloxGlobalObject {
-    identity?: CFrame;
-    position?: Vector3;
-    rotation?: CFrame;
-    x?: number;
-    y?: number;
-    z?: number;
-    lookVector?: Vector3;
-    rightVector?: Vector3;
-    upVector?: Vector3;
-    xVector?: Vector3;
-    yVector?: Vector3;
-    zVector?: Vector3;
+export enum RotationOrder {
+    xyz,
+    xzy,
+    yzx,
+    yxz,
+    zxy,
+    zyx,
+}
 
-    constructor() {}
+declare type CFrameComponents = {
+    x: number,
+    y: number,
+    z: number,
+    r00: number,
+    r01: number,
+    r02: number,
+    r10: number,
+    r11: number,
+    r12: number,
+    r20: number,
+    r21: number,
+    r22: number,
+};
+
+declare type Matrix3x3 = [
+    [number, number, number],
+    [number, number, number],
+    [number, number, number]
+];
+
+export class CFrame implements RobloxGlobalObject {
+    position: Vector3;
+    rotation: Matrix3x3;
+    x: number;
+    y: number;
+    z: number;
+    lookVector: Vector3;
+    rightVector: Vector3;
+    upVector: Vector3;
+    xVector: Vector3;
+    yVector: Vector3;
+    zVector: Vector3;
+
+    constructor();
+
+    constructor(pos: Vector3);
+
+    constructor(pos: Vector3, lookAt: Vector3);
+
+    constructor(x: number, y: number, z: number);
+
+    constructor(x: number, y: number, z: number, qX: number, qY: number, qZ: number, qW: number);
+
+    constructor(x: number, y: number, z: number, r00: number, r01: number, r02: number, r10: number, r11: number, r12: number, r20: number, r21: number, r22: number);
+
+    constructor(
+        xOrPosition?: number | Vector3,
+        yOrLookAt?: number | Vector3,
+        zOrQuaternionOrMatrix?: number | Matrix3x3,
+        qx?: number,
+        qy?: number,
+        qz?: number,
+        qw?: number
+      ) {
+        if (xOrPosition === undefined) {
+          this.position = new Vector3(0, 0, 0);
+          this.rotation = [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+          ];
+          this.x = this.position.x;
+          this.y = this.position.y;
+          this.z = this.position.z;
+          this.rightVector = new Vector3(
+            this.rotation[0][0],
+            this.rotation[0][1],
+            this.rotation[0][2],
+          );
+          this.upVector = new Vector3(
+            this.rotation[1][0],
+            this.rotation[1][1],
+            this.rotation[1][2],
+          );
+          this.lookVector = new Vector3(
+            -this.rotation[2][0],
+            -this.rotation[2][1],
+            -this.rotation[2][2],
+          );
+          this.xVector = this.rightVector;
+          this.yVector = this.upVector;
+          this.zVector = this.lookVector.opposite;
+        }
+        else if (xOrPosition instanceof Vector3 && yOrLookAt instanceof Vector3) {
+          const position = xOrPosition; 
+            const lookAt = yOrLookAt;
+            this.position = position;
+            this.rotation = this.calculateLookAtMatrix(position, lookAt);
+            this.x = position.x;
+            this.y = position.y;
+            this.z = position.z;
+            this.rightVector = new Vector3(
+                this.rotation[0][0],
+                this.rotation[0][1],
+                this.rotation[0][2],
+              );
+              this.upVector = new Vector3(
+                this.rotation[1][0],
+                this.rotation[1][1],
+                this.rotation[1][2],
+              );
+              this.lookVector = new Vector3(
+                -this.rotation[2][0],
+                -this.rotation[2][1],
+                -this.rotation[2][2],
+              );
+              this.xVector = this.rightVector;
+              this.yVector = this.upVector;
+              this.zVector = this.lookVector.opposite;
+        }
+        else if (typeof xOrPosition === "number" && typeof yOrLookAt === "number" && typeof zOrQuaternionOrMatrix === "number") {
+          const x = xOrPosition;
+          const y = yOrLookAt;
+          const z = zOrQuaternionOrMatrix;
+          this.position = new Vector3(x, y, z);
+          this.x = x;
+          this.y = y;
+          this.z = z;
+          if (qx !== undefined && qy !== undefined && qz !== undefined && qw !== undefined) {
+            this.rotation = this.calculateRotationMatrixFromQuaternion(qx, qy, qz, qw);
+          }
+          else {
+            this.rotation = [
+              [1, 0, 0],
+              [0, 1, 0],
+              [0, 0, 1],
+            ];
+          }
+          this.rightVector = new Vector3(
+            this.rotation[0][0],
+            this.rotation[0][1],
+            this.rotation[0][2],
+          );
+          this.upVector = new Vector3(
+            this.rotation[1][0],
+            this.rotation[1][1],
+            this.rotation[1][2],
+          );
+          this.lookVector = new Vector3(
+            -this.rotation[2][0],
+            -this.rotation[2][1],
+            -this.rotation[2][2],
+          );
+          this.xVector = this.rightVector;
+          this.yVector = this.upVector;
+          this.zVector = this.lookVector.opposite;
+        } else {
+            throw new Error();
+        }
+      }
+
+    static lookAt(at: Vector3, lookAt: Vector3, up: Vector3 = new Vector3(0, 1, 0)): CFrame {
+        return new CFrame(
+            at,
+            lookAt,
+        );
+    }
+
+    static lookAlong(at: Vector3, direction: Vector3, up: Vector3): CFrame {
+        throw new Error();
+    }
+
+    static fromRotationBetweenVectors(from: Vector3, to: Vector3): CFrame {
+        throw new Error();
+    }
+
+    static fromEulerAngles(rx: number, ry: number, rz: number, order: RotationOrder): CFrame {
+        throw new Error();
+    }
+
+    static fromEulerAnglesXYZ(rx: number, ry: number, rz: number): CFrame {
+        throw new Error();
+    }
+
+    static fromEulerAnglesYXZ(rx: number, ry: number, rz: number): CFrame {
+        throw new Error();
+    }
+
+    static angles(rx: number, ry: number, rz: number): CFrame {
+        throw new Error();
+    }
+
+    static fromOrientation(rx: number, ry: number, rz: number): CFrame {
+        throw new Error();
+    }
+
+    static fromAxisAngle(v: Vector3, r: number): CFrame {
+        throw new Error();
+    }
+
+    static fromMatrix(pos: Vector3, vX: Vector3, vY: Vector3, vZ: Vector3): CFrame {
+        throw new Error();
+    } 
+
+    get components(): CFrameComponents {
+        return {
+            x: this.position.x,
+            y: this.position.y,
+            z: this.position.z,
+            r00: this.xVector.x,
+            r10: this.xVector.y,
+            r20: this.xVector.z,
+            r01: this.yVector.x,
+            r11: this.yVector.y,
+            r21: this.yVector.z,
+            r02: this.zVector.x,
+            r12: this.zVector.y,
+            r22: this.zVector.z,
+        };
+    }
+
+  private calculateLookAtMatrix(position: Vector3, lookAt: Vector3): Matrix3x3 {
+    const zAxis = position.subtract(lookAt).unit;
+    const xAxis = new Vector3(-zAxis.z, 0, zAxis.x).unit;
+    const yAxis = xAxis.cross(zAxis);
+
+    return [
+      [xAxis.x, xAxis.y, xAxis.z],
+      [yAxis.x, yAxis.y, yAxis.z],
+      [zAxis.x, zAxis.y, zAxis.z],
+    ];
+  }
+
+  private calculateRotationMatrixFromQuaternion(qx: number, qy: number, qz: number, qw: number): Matrix3x3 {
+    return [
+      [
+        1 - 2 * qy * qy - 2 * qz * qz,
+        2 * qx * qy - 2 * qz * qw,
+        2 * qx * qz + 2 * qy * qw,
+      ],
+      [
+        2 * qx * qy + 2 * qz * qw,
+        1 - 2 * qx * qx - 2 * qz * qz,
+        2 * qy * qz - 2 * qx * qw,
+      ],
+      [
+        2 * qx * qz - 2 * qy * qw,
+        2 * qy * qz + 2 * qx * qw,
+        1 - 2 * qx * qx - 2 * qy * qy,
+      ],
+    ];
+  }
+
     toCode(): string {
         return `CFrame.new(${this.x}, ${this.y}, ${this.z})`;
+    }
+
+    toRBXMXCode(propertyName: string): string {
+        const comps = this.components;
+        return `
+        <CoordinateFrame name="${propertyName}">
+            <X>${comps.x}</X>
+            <Y>${comps.y}</Y>
+            <Z>${comps.z}</Z>
+            <R00>${comps.r00}</R00>
+            <R01>${comps.r01}</R01>
+            <R02>${comps.r02}</R02>
+            <R10>${comps.r10}</R10>
+            <R11>${comps.r11}</R11>
+            <R12>${comps.r12}</R12>
+            <R20>${comps.r20}</R20>
+            <R21>${comps.r21}</R21>
+            <R22>${comps.r22}</R22>
+        </CoordinateFrame>
+        `;
     }
 }
 
@@ -292,9 +697,21 @@ export enum FieldOfViewMode {
     maxAxis
 }
 
-export class Camera extends Instance {
+export enum CameraType {
+    fixed,
+    attach,
+    watch,
+    track,
+    follow,
+    custom,
+    scriptable,
+    orbital,
+}
+
+export class Camera extends Instance implements RBXMXCodeParser {
     cframe: CFrame;
     cameraSubject?: Instance;
+    cameraType: CameraType;
     diagonalFieldOfView: number;
     fieldOfView: number;
     fieldOfViewMode: FieldOfViewMode;
@@ -311,6 +728,7 @@ export class Camera extends Instance {
         //
         cframe?: CFrame,
         cameraSubject?: Instance,
+        cameraType: CameraType,
         diagonalFieldOfView?: number,
         fieldOfView?: number,
         fieldOfViewMode?: FieldOfViewMode,
@@ -321,12 +739,14 @@ export class Camera extends Instance {
         vrTiltAndRollEnabled?: boolean,
     }) {
         super({
+            className: "Camera",
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
         });
         this.cframe = params.cframe ?? new CFrame();
         this.cameraSubject = params.cameraSubject;
+        this.cameraType = params.cameraType ?? CameraType.fixed;
         this.diagonalFieldOfView = params.diagonalFieldOfView ?? 88.877;
         this.fieldOfView = params.fieldOfView ?? 70;
         this.fieldOfViewMode = params.fieldOfViewMode ?? FieldOfViewMode.vertical;
@@ -339,8 +759,9 @@ export class Camera extends Instance {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
+        ${typeof this.cameraSubject === "undefined" ? "" : this.cameraSubject?.toCode(variableName + "CameraSubject")}
         ${variableName}.CFrame = ${this.cframe.toCode()}
-        ${variableName}.CameraSubject = ${this.cameraSubject?.toCode(variableName) ?? "nil"}
+        ${variableName}.CameraSubject = ${typeof this.cameraSubject === "undefined" ? "nil" : `${variableName + "CameraSubject"}`}
         ${variableName}.DiagonalFieldOfView = ${this.diagonalFieldOfView}
         ${variableName}.FieldOfView = ${this.fieldOfView}
         ${variableName}.FieldOfViewMode = ${toCode(this.fieldOfViewMode)}
@@ -351,12 +772,18 @@ export class Camera extends Instance {
         ${variableName}.VRTiltAndRollEnabled = ${this.vrTiltAndRollEnabled}
         `;
     }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim(),
+        );
+    }
 }
 
-export class Vector3 implements RobloxGlobalObject {
-    static zero = new Vector2(0, 0);
+export class Vector3 implements Vector<Vector3>, RobloxGlobalObject {
+    static zero = new Vector3(0, 0, 0);
     
-    static one = new Vector2(1, 1);
+    static one = new Vector3(1, 1, 1);
 
     x: number;
     y: number;
@@ -367,8 +794,71 @@ export class Vector3 implements RobloxGlobalObject {
         this.y = y;
         this.z = z;
     }
+
+    cross(other: Vector3): Vector3 {
+        return new Vector3(
+          this.y * other.z - this.z * other.y,
+          this.z * other.x - this.x * other.z,
+          this.x * other.y - this.y * other.x
+        );
+    }
+
+    get length(): number {
+        return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2) + Math.pow(this.z, 2));
+    }
+    
+    get unit(): Vector3 {
+        return this.divide(this.length);
+    }
+    
+    get opposite(): Vector3 {
+        return new Vector3(-this.x, -this.y, -this.z);
+    }
+    
+    add(vec: Vector3): Vector3 {
+        return new Vector3(
+            this.x + vec.x,
+            this.y + vec.y,
+            this.z + vec.z,
+        );
+    }
+    
+    subtract(vec: Vector3): Vector3 {
+        return new Vector3(
+            this.x - vec.x,
+            this.y - vec.y,
+            this.z - vec.z,
+        );
+    }
+    
+    factor(factor: number): Vector3 {
+        return new Vector3(
+            factor * this.x,
+            factor * this.y,
+            factor * this.z,
+        );
+    }
+    
+    divide(divisor: number): Vector3 {
+        return new Vector3(
+            this.x/divisor,
+            this.y/divisor,
+            this.z/divisor,
+        );
+    }
+
     toCode(): string {
         return `Vector3.new(${this.x}, ${this.y}, ${this.z})`;
+    }
+
+    toRBXMXCode(propertyName: string): string {
+        return `
+        <Vector3 name="${propertyName}">
+            <X>${this.x}</X>
+            <Y>${this.y}</Y>
+            <Z>${this.z}</Z>
+        </Vector3>
+        `;
     }
 }
 
@@ -386,16 +876,70 @@ export enum ScaleType {
 }
 
 export class RobloxRect implements RobloxGlobalObject {
+    width: number;
+    height: number;
     min: Vector2;
     max: Vector2;
 
-    constructor(min: Vector2, max: Vector2) {
-        this.min = min;
-        this.max = max;
+    constructor();
+
+    constructor(min: Vector2, max: Vector2);
+
+    constructor(minX: number, minY: number, maxX: number, maxY: number);
+
+    constructor(a?: Vector2 | number, b?: Vector2 | number, c?: number, d?: number) {
+        if (
+            typeof a === "undefined" && 
+            typeof b === "undefined" &&
+            typeof c === "undefined" &&
+            typeof d === "undefined"
+        ) {
+            this.min = Vector2.zero;
+            this.max = Vector2.zero;
+            this.width = this.min.x;
+            this.height = this.min.y;
+        } else if (
+            a instanceof Vector2 && 
+            b instanceof Vector2 &&
+            typeof c === "undefined" &&
+            typeof d === "undefined"        
+        ) {
+            this.min = a;
+            this.max = b;
+            this.width = a.x;
+            this.height = a.y;
+        } else if (
+            typeof a === "number" && 
+            typeof b === "number" &&
+            typeof c === "number" &&
+            typeof d === "number"
+        ) {
+            this.min = new Vector2(a, b);
+            this.max = new Vector2(c, d);
+            this.width = this.min.x;
+            this.height = this.min.y;
+        } else {
+            throw new Error();
+        }
     }
 
     toCode(): string {
         return `Rect.new(${this.min.toCode()}, ${this.max.toCode()})`;
+    }
+
+    toRBXMXCode(propertyName: string): string {
+        return `
+        <Rect2D name="${propertyName}">
+            <min>
+                <X>${this.min.x}</X>
+                <Y>${this.min.y}</Y>
+            </min>
+            <max>
+                <X>${this.max.x}</X>
+                <Y>${this.max.y}</Y>
+            </max>
+        </Rect2D>
+        `;
     }
 }
 
@@ -436,23 +980,46 @@ export class Font implements RobloxGlobalObject {
     toCode(): string {
         return `Font.new("${this.family}", ${toCode(this.weight)}, ${toCode(this.style)})`;
     }
+
+    toRBXMXCode(propertyName: string): string {
+        return `
+        <Font name="${propertyName}">
+            <Family>
+                <url>
+                    rbxasset://fonts/families/${this.family}.json
+                </url>
+            </Family>
+            <Weight>
+                ${this.weight}
+            </Weight>
+            <Style>
+                ${this.style}
+            </Style>
+            <CachedFaceId>
+                <url>
+                    rbxasset://fonts/families/${this.family}-Regular.ttf
+                </url>
+            </CachedFaceId>
+        </Font>
+        `;
+    }
 }
 
 export enum FontWeight {
-    thin,
-    extraLight,
-    light,
-    regular,
-    medium,
-    semiBold,
-    bold,
-    extraBold,
-    heavy
+    thin = 100,
+    extraLight = 200,
+    light = 300,
+    regular = 400,
+    medium = 500,
+    semiBold = 600,
+    bold = 700,
+    extraBold = 800,
+    heavy = 900,
 }
 
 export enum FontStyle {
-    normal,
-    italic
+    normal = "Normal",
+    italic = "Italic",
 }
 
 export enum AspectType {
@@ -481,7 +1048,7 @@ export enum ItemLineAlignment {
     stretch,
 }
 
-export class ColorSequenceKeypoint implements RobloxGlobalObject {
+export class ColorSequenceKeypoint {
     time: number;
     value: Color3;
 
@@ -489,17 +1056,27 @@ export class ColorSequenceKeypoint implements RobloxGlobalObject {
         this.time = time;
         this.value = color;
     }
+    
     toCode(): string {
         return `ColorSequenceKeypoint.new(${this.time}, ${this.value.toCode()})`;
+    }
+
+    toRBXMXCode(): string {
+        return `${this.time} ${this.value.r} ${this.value.g} ${this.value.b} 0`;
     }
 }
 
 export class ColorSequence implements RobloxGlobalObject {
+    private keypointsBuffer: StringBuffer = new StringBuffer();
+
     keypoints: ReadonlyArray<ColorSequenceKeypoint>;
 
     constructor(c: Color3);
+
     constructor(c0: Color3, c1: Color3);
+
     constructor(keypoints: ColorSequenceKeypoint[]);
+    
     constructor(c0?: Color3 | ColorSequenceKeypoint[], c1?: Color3) {
         if (
             c0 instanceof Color3 &&
@@ -524,6 +1101,17 @@ export class ColorSequence implements RobloxGlobalObject {
         }
     }
 
+    get keypointsAsRBXMX(): string {
+        for (var i: number = 0; i < this.keypoints.length; i++) {
+            if (i == this.keypoints.length - 1) {
+                this.keypointsBuffer.write(this.keypoints[i].toRBXMXCode());
+            } else {
+                this.keypointsBuffer.write(`${this.keypoints[i].toRBXMXCode()} `);
+            }
+        }
+        return this.keypointsBuffer.toString();
+    }
+
     toCode(): string {
         return `ColorSequence.new({${this.keypoints
             .toString()
@@ -532,29 +1120,58 @@ export class ColorSequence implements RobloxGlobalObject {
             .trim()
         })}`;
     }
+
+    toRBXMXCode(propertyName: string): string {
+        return `
+        <ColorSequence name="${propertyName}">
+            ${this.keypointsAsRBXMX}
+        </ColorSequence>
+        `;
+    }
 }
 
-export class NumberSequenceKeypoint implements RobloxGlobalObject {
+export class NumberSequenceKeypoint {
     time: number;
     value: number;
     envelope: number;
 
-    constructor(time: number, value: number, envelope: number) {
+    constructor(time: number, value: number);
+
+    constructor(time: number, value: number, envelope: number);
+
+    constructor(time: number, value: number, envelope?: number) {
         this.time = time;
         this.value = value;
-        this.envelope = envelope;
+        this.envelope = envelope ?? 0;
     }
 
     toCode(): string {
         return `NumberSequenceKeypoint.new(${this.time}, ${this.value}, ${this.envelope})`;
     }
+
+    toRBXMXCode(): string {
+        return `${this.time} ${this.value} ${this.envelope}`;
+    }
 }
 
 export class NumberSequence implements RobloxGlobalObject {
+    private keypointsBuffer: StringBuffer = new StringBuffer();
+
     keypoints: NumberSequenceKeypoint[];
 
     constructor(keypoints: NumberSequenceKeypoint[]) {
         this.keypoints = keypoints;
+    }
+
+    get keypointsAsRBXMX(): string {
+        for (var i: number = 0; i < this.keypoints.length; i++) {
+            if (i == this.keypoints.length - 1) {
+                this.keypointsBuffer.write(this.keypoints[i].toRBXMXCode());
+            } else {
+                this.keypointsBuffer.write(`${this.keypoints[i].toRBXMXCode()} `);
+            }
+        }
+        return this.keypointsBuffer.toString();
     }
 
     toCode(): string {
@@ -565,6 +1182,14 @@ export class NumberSequence implements RobloxGlobalObject {
             .replace("]", "")
             .trim()
         })`;
+    }
+
+    toRBXMXCode(propertyName: string): string {
+        return `
+        <NumberSequence name="${propertyName}">
+            ${this.keypointsAsRBXMX}
+        </NumberSequence>
+        `;
     }
 }
 
@@ -1008,11 +1633,13 @@ export function toCode(enumeration: RobloxEnumerations): string {
 
 export abstract class GuiBase extends Instance {
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable, 
             name: params.name ?? 'GuiBase', 
             parent: params.parent
@@ -1021,7 +1648,7 @@ export abstract class GuiBase extends Instance {
 }
 
 abstract class GuiBase2d extends GuiBase {
-    _children: Array<Instance> = [];
+    private _children: Array<Instance> = [];
 
     autoLocalize: boolean;
     rootLocalizationTable?: LocalizationTable;
@@ -1032,6 +1659,7 @@ abstract class GuiBase2d extends GuiBase {
     selectionGroup: boolean;
     
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
@@ -1045,6 +1673,7 @@ abstract class GuiBase2d extends GuiBase {
         selectionGroup?: boolean,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable, 
             name: params.name ?? 'GuiBase2d', 
             parent: params.parent
@@ -1063,7 +1692,7 @@ abstract class GuiBase2d extends GuiBase {
     }
 
     addChild(child: Instance): void {
-        if (child.parent !== this) {
+        if (child.parent != this) {
             child.parent = this;
         }
         this._children.push(child);
@@ -1087,13 +1716,20 @@ abstract class GuiBase2d extends GuiBase {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
+        ${typeof this.rootLocalizationTable === "undefined" ? "" : this.rootLocalizationTable.toCode(variableName + "LocalizationTable")}
         ${variableName}.AutoLocalize = ${this.autoLocalize}
-        ${variableName}.RootLocalizationTable = ${this.rootLocalizationTable?.toCode(variableName) ?? 'nil'}
+        ${variableName}.RootLocalizationTable = ${typeof this.rootLocalizationTable === "undefined" ? "nil" : `${variableName + "LocalizationTable"}`}
         ${variableName}.SelectionBehaviorDown = ${toCode(this.selectionBehaviorDown)}
         ${variableName}.SelectionBehaviorLeft = ${toCode(this.selectionBehaviorLeft)}
         ${variableName}.SelectionBehaviorRight = ${toCode(this.selectionBehaviorRight)}
         ${variableName}.SelectionBehaviorUp = ${toCode(this.selectionBehaviorUp)}
         ${variableName}.SelectionGroup = ${this.selectionGroup}
+        `;
+    }
+
+    toRBXMXCode(name: string): string {
+        return `
+        
         `;
     }
 }
@@ -1104,6 +1740,7 @@ abstract class LayerCollector extends GuiBase2d {
     zIndexBehavior: ZIndexBehaviour;
 
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
@@ -1121,6 +1758,7 @@ abstract class LayerCollector extends GuiBase2d {
         zIndexBehavior?: ZIndexBehaviour,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -1171,7 +1809,7 @@ export declare type ScreenGuiProperties = {
     screenInsets?: ScreenInsets,
 };
 
-export class ScreenGui extends LayerCollector {
+export class ScreenGui extends LayerCollector implements RBXMXCodeParser {
     clipToDeviceSafeArea: boolean;
     displayOrder: number;
     ignoreGuiInset: boolean;
@@ -1180,6 +1818,7 @@ export class ScreenGui extends LayerCollector {
 
     constructor(params: ScreenGuiProperties) {
         super({
+            className: "ScreenGui",
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -1212,6 +1851,12 @@ export class ScreenGui extends LayerCollector {
         ${variableName}.ScreenInsets = ${toCode(this.screenInsets)}
         `;
     }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim()
+        );
+    }
 }
 
 export abstract class GuiBase3d extends GuiBase {
@@ -1220,6 +1865,7 @@ export abstract class GuiBase3d extends GuiBase {
     visible: boolean;
     
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
@@ -1229,6 +1875,7 @@ export abstract class GuiBase3d extends GuiBase {
         visible: boolean,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable, 
             name: params.name ?? 'GuiBase3d', 
             parent: params.parent
@@ -1274,6 +1921,7 @@ export abstract class GuiObject extends GuiBase2d {
     zIndex: number;
 
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
@@ -1312,6 +1960,7 @@ export abstract class GuiObject extends GuiBase2d {
         zIndex?: number,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -1352,6 +2001,12 @@ export abstract class GuiObject extends GuiBase2d {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
+        ${typeof this.nextSelectionDown === "undefined" ? "" : this.nextSelectionDown.toCode(variableName + "NextSelectionDown")}
+        ${typeof this.nextSelectionLeft === "undefined" ? "" : this.nextSelectionLeft.toCode(variableName + "NextSelectionLeft")}
+        ${typeof this.nextSelectionRight === "undefined" ? "" : this.nextSelectionRight.toCode(variableName + "NextSelectionRight")}
+        ${typeof this.nextSelectionUp === "undefined" ? "" : this.nextSelectionUp.toCode(variableName + "NextSelectionUp")}
+        ${typeof this.selectionImageObject === "undefined" ? "" : this.selectionImageObject.toCode(variableName + "SelectionImageObject")}
+
         ${variableName}.Active = ${this.active}
         ${variableName}.AnchorPoint = ${this.anchorPoint.toCode()}
         ${variableName}.AutomaticSize = ${toCode(this.automaticSize)}
@@ -1363,14 +2018,14 @@ export abstract class GuiObject extends GuiBase2d {
         ${variableName}.ClipDescendants = ${this.clipDescendants}
         ${variableName}.Interactable = ${this.interactable}
         ${variableName}.LayoutOrder = ${this.layoutOrder}
-        ${variableName}.NextSelectionDown = ${this.nextSelectionDown?.toCode(variableName) ?? "nil"}
-        ${variableName}.NextSelectionLeft = ${this.nextSelectionLeft?.toCode(variableName) ?? "nil"}
-        ${variableName}.NextSelectionRight = ${this.nextSelectionRight?.toCode(variableName) ?? "nil"}
-        ${variableName}.NextSelectionUp = ${this.nextSelectionUp?.toCode(variableName) ?? "nil"}
+        ${variableName}.NextSelectionDown = ${typeof this.nextSelectionDown === "undefined" ? "nil": `${variableName + "NextSelectionDown"}`}
+        ${variableName}.NextSelectionLeft = ${typeof this.nextSelectionLeft === "undefined" ? "nil": `${variableName + "NextSelectionLeft"}`}
+        ${variableName}.NextSelectionRight = ${typeof this.nextSelectionRight === "undefined" ? "nil": `${variableName + "NextSelectionRight"}`}
+        ${variableName}.NextSelectionUp = ${typeof this.nextSelectionUp === "undefined" ? "nil": `${variableName + "NextSelectionUp"}`}
         ${variableName}.Position = ${this.position.toCode()}
         ${variableName}.Rotation = ${this.rotation}
         ${variableName}.Selectable = ${this.selectable}
-        ${variableName}.SelectionImageObject = ${this.selectionImageObject?.toCode(variableName) ?? "nil"}
+        ${variableName}.SelectionImageObject = ${typeof this.selectionImageObject === "undefined" ? "nil": `\"${variableName + "SelectionImageObject"}\"`}
         ${variableName}.SelectionOrder = ${this.selectionOrder}
         ${variableName}.Size = ${this.size.toCode()}
         ${variableName}.SizeConstraint = ${toCode(this.sizeConstraint)}
@@ -1387,6 +2042,7 @@ abstract class GuiButton extends GuiObject {
     style: ButtonStyle;
     
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
@@ -1430,6 +2086,7 @@ abstract class GuiButton extends GuiObject {
         style?: ButtonStyle,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -1483,7 +2140,7 @@ abstract class GuiButton extends GuiObject {
     }
 }
 
-export class Frame extends GuiObject {
+export class Frame extends GuiObject implements RBXMXCodeParser {
     style: FrameStyle;
 
     constructor(params: {
@@ -1527,6 +2184,7 @@ export class Frame extends GuiObject {
         style?: FrameStyle,
     }) {
         super({
+            className: "Frame",
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -1572,9 +2230,15 @@ export class Frame extends GuiObject {
         ${variableName}.Style = ${toCode(this.style)}
         `;
     }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim(),
+        );
+    }
 }
 
-export class ScrollingFrame extends GuiObject {
+export class ScrollingFrame extends GuiObject implements RBXMXCodeParser {
     automaticCanvasSize: AutomaticSize;
     bottomImage: string;
     canvasPosition: Vector2;
@@ -1646,6 +2310,7 @@ export class ScrollingFrame extends GuiObject {
         verticalScrollBarPosition?: VerticalScrollBarPosition,
     }) {
         super({
+            className: "ScrollingFrame",
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -1719,9 +2384,15 @@ export class ScrollingFrame extends GuiObject {
         ${variableName}.VerticalScrollBarPosition = ${toCode(this.verticalScrollBarPosition)}
         `;
     }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim(),
+        );
+    }
 }
 
-export class VideoFrame extends GuiObject {
+export class VideoFrame extends GuiObject implements RBXMXCodeParser {
     looped: boolean;
     playing: boolean;
     timePosition: number;
@@ -1773,6 +2444,7 @@ export class VideoFrame extends GuiObject {
         volume?: number,
     }) {
         super({
+            className: "VideoFrame",
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -1819,16 +2491,22 @@ export class VideoFrame extends GuiObject {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
-        ${variableName}.Looped = ${this.looped}
+        ${variableName}.Video = ${this.video ?? "\"\""}
         ${variableName}.Playing = ${this.playing}
         ${variableName}.TimePosition = ${this.timePosition}
         ${variableName}.Looped = "${this.video ?? ''}"
         ${variableName}.Volume = ${this.volume}
         `;
     }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim()
+        );
+    }
 }
 
-export class ViewportFrame extends GuiObject {
+export class ViewportFrame extends GuiObject implements RBXMXCodeParser {
     ambient: Color3;
     currentCamera?: Camera;
     imageColor3: Color3;
@@ -1882,6 +2560,7 @@ export class ViewportFrame extends GuiObject {
         lightDirection?: Vector3,
     }) {
         super({
+            className: "ViewportFrame",
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -1929,13 +2608,21 @@ export class ViewportFrame extends GuiObject {
 
     toCode(variableName: string): string {
         return super.toCode(variableName) + `
+        ${typeof this.currentCamera === "undefined" ? "" : this.currentCamera.toCode(variableName + "CurrentCamera")}
+
         ${variableName}.Ambient = ${this.ambient.toCode()}
-        ${variableName}.CurrentCamera = ${this.currentCamera?.toCode(variableName) ?? "nil"}
+        ${variableName}.CurrentCamera = ${typeof this.currentCamera === "undefined" ? "nil" : `${variableName + "CurrentCamera"}`}
         ${variableName}.ImageColor3 = ${this.imageColor3.toCode()}
         ${variableName}.ImageTransparency = ${this.imageTransparency}
         ${variableName}.LightColor = ${this.lightColor.toCode()}
         ${variableName}.LightDirection = ${this.lightDirection.toCode()}
         `;
+    }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim(),
+        );
     }
 }
 
@@ -1952,6 +2639,7 @@ abstract class ImageObject extends GuiObject {
     tileSize: UDim2;
 
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
@@ -2001,6 +2689,7 @@ abstract class ImageObject extends GuiObject {
         tileSize?: UDim2,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -2066,7 +2755,7 @@ abstract class ImageObject extends GuiObject {
     }
 }
 
-export class ImageLabel extends ImageObject {
+export class ImageLabel extends ImageObject implements RBXMXCodeParser{
     constructor(params: {
         archivable?: boolean,
         name?: string,
@@ -2117,6 +2806,7 @@ export class ImageLabel extends ImageObject {
         tileSize?: UDim2,
     }) {
         super({
+            className: "ImageLabel",
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -2166,9 +2856,15 @@ export class ImageLabel extends ImageObject {
             tileSize: params.tileSize,
         });
     }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim(),
+        );
+    }
 }
 
-export class ImageButton extends ImageObject implements GuiButton {
+export class ImageButton extends ImageObject implements GuiButton, RBXMXCodeParser {
     autoButtonColor: boolean;
     modal: boolean;
     selected: boolean;
@@ -2234,6 +2930,7 @@ export class ImageButton extends ImageObject implements GuiButton {
         pressedImage?: string,
     }) {
         super({
+            className: "ImageButton",
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -2301,6 +2998,12 @@ export class ImageButton extends ImageObject implements GuiButton {
         ${variableName}.PressedImage = "${this.pressedImage ?? ""}"
         `;
     }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim(),
+        );
+    }
 }
 
 abstract class TextObject extends GuiObject {
@@ -2323,6 +3026,7 @@ abstract class TextObject extends GuiObject {
     textYAlignment: TextYAlignment;
 
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
@@ -2379,6 +3083,7 @@ abstract class TextObject extends GuiObject {
         textYAlignment?: TextYAlignment
     }) {
         super({
+            className: params.className,
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -2458,7 +3163,7 @@ abstract class TextObject extends GuiObject {
     }
 }
 
-export class TextLabel extends TextObject {
+export class TextLabel extends TextObject implements RBXMXCodeParser {
     constructor(params: {
         archivable?: boolean,
         name?: string,
@@ -2516,6 +3221,7 @@ export class TextLabel extends TextObject {
         textYAlignment?: TextYAlignment
     }) {
         super({
+            className: "TextLabel",
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -2572,9 +3278,15 @@ export class TextLabel extends TextObject {
             textYAlignment: params.textYAlignment,
         });
     }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim(),
+        );
+    }
 }
 
-export class TextButton extends TextObject implements GuiButton {
+export class TextButton extends TextObject implements GuiButton, RBXMXCodeParser {
     autoButtonColor: boolean;
     modal: boolean;
     selected: boolean;
@@ -2642,6 +3354,7 @@ export class TextButton extends TextObject implements GuiButton {
         style?: ButtonStyle,
     }) {
         super({
+            className: "TextButton",
             archivable: params.archivable,
             name: params.name,
             parent: params.parent,
@@ -2711,9 +3424,15 @@ export class TextButton extends TextObject implements GuiButton {
         ${variableName}.Style = ${toCode(this.style)}
         `;
     }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim()
+        );
+    }
 }
 
-export class TextBox extends TextObject {
+export class TextBox extends TextObject implements RBXMXCodeParser {
     clearTextFocus: boolean;
     cursorPosition: number;
     multiLine: boolean;
@@ -2790,6 +3509,7 @@ export class TextBox extends TextObject {
         textEditable?: boolean,
     }) {
         super({
+            className: "TextBox",
             archivable: params.archivable,
             name: params.name ?? 'TextBox',
             parent: params.parent,
@@ -2867,6 +3587,12 @@ export class TextBox extends TextObject {
         ${variableName}.TextEditable = ${this.textEditable}
         `;
     }
+
+    toRBXMXCode(): string {
+        return toRBXMX(
+            RBMXMFile.instanceRBXMX(this).trim(),
+        );
+    }
 }
 
 export declare type RobloxUI = 
@@ -2882,11 +3608,13 @@ export declare type RobloxUI =
 
 abstract class UIBase extends Instance {
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable, 
             name: params.name ?? 'UIBase', 
             parent: params.parent
@@ -2896,11 +3624,13 @@ abstract class UIBase extends Instance {
 
 abstract class UIComponent extends UIBase {
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -2910,11 +3640,13 @@ abstract class UIComponent extends UIBase {
 
 abstract class UIConstraint extends UIComponent {
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -2924,11 +3656,13 @@ abstract class UIConstraint extends UIComponent {
 
 abstract class UILayout extends UIComponent {
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -2943,6 +3677,7 @@ abstract class UIGridStyleLayout extends UILayout {
     verticalAlignment: VerticalAlignment;
 
     constructor(params: {
+        className: RobloxClassName,
         archivable?: boolean,
         name?: string,
         parent?: Instance,
@@ -2953,6 +3688,7 @@ abstract class UIGridStyleLayout extends UILayout {
         verticalAlignment?: VerticalAlignment,
     }) {
         super({
+            className: params.className,
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -2988,6 +3724,7 @@ export class UIAspectRatioConstraint extends UIConstraint {
         dominantAxis?: DominantAxis;
     }) {
         super({
+            className: "UIAspectRatioConstraint",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -3017,6 +3754,7 @@ export class UICorner extends UIConstraint {
         cornerRadius?: UDim,
     }) {
         super({
+            className: "UICorner",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -3048,6 +3786,7 @@ export class UIFlexItem extends UIComponent {
         shrinkRatio?: number,
     }) {
         super({
+            className: "UIFlexItem",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -3087,6 +3826,7 @@ export class UIGradient extends UIComponent {
         transparency?: NumberSequence,
     }) {
         super({
+            className: "UIGradient",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -3135,6 +3875,7 @@ export class UIGridLayout extends UIGridStyleLayout {
         startCorner?: StartCorner,
     }) {
         super({
+            className: "UIGridLayout",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent,
@@ -3184,6 +3925,7 @@ export class UIListLayout extends UIGridStyleLayout {
         wraps: boolean,
     }) {
         super({
+            className: "UIListLayout",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent,
@@ -3228,6 +3970,7 @@ export class UIPadding extends UIComponent {
         paddingTop?: UDim,
     }) {
         super({
+            className: "UIPadding",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -3280,6 +4023,7 @@ export class UIPageLayout extends UIGridStyleLayout {
         tweenTime?: number,
     }) {
         super({
+            className: "UIPageLayout",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent,
@@ -3326,6 +4070,7 @@ export class UIScale extends UIComponent {
         scale?: number,
     }) {
         super({
+            className: "UIScale",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -3353,6 +4098,7 @@ export class UISizeConstraint extends UIConstraint {
         minSize?: Vector2,
     }) {
         super({
+            className: "UISizeConstraint",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -3390,6 +4136,7 @@ export class UIStroke extends UIComponent {
         transparency?: number,
     }) {
         super({
+            className: "UIStroke",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent
@@ -3436,6 +4183,7 @@ export class UITableLayout extends UIGridStyleLayout {
         padding?: UDim2,
     }) {
         super({
+            className: "UITableLayout",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent,
@@ -3474,6 +4222,7 @@ export class UITextSizeConstraint extends UIConstraint {
         minTextSize?: number,    
     }) {
         super({
+            className: "UITextSizeConstraint",
             archivable: params.archivable, 
             name: params.name ?? 'UIComponent', 
             parent: params.parent

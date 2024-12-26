@@ -1,5 +1,14 @@
-import { assert } from "console";
-import { bloxUITitle, codeGenerationLanguage, dartTitle, luaCodeTitle } from "./constants";
+import { 
+    assert 
+} from "console";
+
+import { 
+    bloxUITitle, 
+    codeGenerationLanguage, 
+    dartTitle, 
+    luaCodeTitle 
+} from "./constants";
+
 import { 
     Color3,
     ColorSequence,
@@ -39,8 +48,29 @@ import {
     ViewportFrame, 
     ZIndexBehaviour 
 } from "./lua";
-import { processNestedNodes, SelectedComponentMap, SelectedNodeMap, selectedNodes } from "./structure";
-import { ExternalFrameProperties, ExternalImageButtonProperties, ExternalImageLabelProperties, ExternalRobloxProperties, ExternalScrollingFrameProperties, ExternalTextBoxProperties, ExternalTextButtonProperties, ExternalTextLabelProperties, ExternalVideoFrameProperties, ExternalViewportFrameProperties } from "./input";
+
+import { 
+    processNestedNodes, 
+    SelectedComponentMap, 
+    SelectedNodeMap, 
+    selectedNodes, 
+    StringBuffer,
+    toCamelCase
+} from "./structure";
+
+import { 
+    ExternalFrameProperties, 
+    ExternalImageButtonProperties, 
+    ExternalImageLabelProperties, 
+    ExternalRobloxProperties, 
+    ExternalScrollingFrameProperties, 
+    ExternalTextBoxProperties, 
+    ExternalTextButtonProperties, 
+    ExternalTextLabelProperties, 
+    ExternalVideoFrameProperties, 
+    ExternalViewportFrameProperties 
+} from "./input";
+import { exportFile } from "./download";
 
 
 export enum BloxF2RLanguages {
@@ -2267,39 +2297,17 @@ export function convertToCode(page: PageNode): void {
     const selection = page.selection;
 }
 
-export function convertToCodeText(
-    page: PageNode, 
-    language: BloxF2RLanguages,
-): CodegenResult {
-    const selection = page.selection;
-    const codeGenerationResult = generateCode(selection, language);
-    switch (language) {
-        case BloxF2RLanguages.lua:
-            return {
-                title: luaCodeTitle,
-                language: codeGenerationLanguage, 
-                code: codeGenerationResult, 
-            };
-        case BloxF2RLanguages.bloxUI:
-            return {
-                title:bloxUITitle,
-                language: codeGenerationLanguage, 
-                code: codeGenerationResult, 
-            };
-        case BloxF2RLanguages.dart:     
-            return {
-                title:dartTitle,
-                language: codeGenerationLanguage, 
-                code: codeGenerationResult, 
-            };
-    }
-}
-
 function generateCode(selection: readonly SceneNode[], language: BloxF2RLanguages): string {
     return '';
 }
 
-export default async function main(externalProperties: Map<String, ExternalRobloxProperties>): Promise<void> {
+export enum ConvertRunType {
+    convertToCode,
+    convertToObject,
+    generateCode,
+}
+
+export default async function main(type: ConvertRunType, externalProperties: Map<string, ExternalRobloxProperties>): Promise<CodegenResult[] | void> {
     const robloxObjectContainer: RobloxUI[] = [];
     processNestedNodes(async (nodeMap) => {
         if (nodeMap.type === 'FRAME') {
@@ -2365,9 +2373,39 @@ export default async function main(externalProperties: Map<String, ExternalRoblo
                 }
             }
         } 
-    }); 
-
-
+    });
+    switch (type) {
+        case ConvertRunType.convertToCode:
+            const luaFile = await exportFile(
+                ConvertRunType.convertToCode, 
+                robloxObjectContainer,
+            );
+            await luaFile.save(); 
+            break;
+        case ConvertRunType.convertToObject:
+            const objectFile = await exportFile(
+                ConvertRunType.convertToObject, 
+                robloxObjectContainer,
+            );
+            await objectFile.save();
+            break;
+        case ConvertRunType.generateCode:
+            const codegenResults: CodegenResult[] = [];
+            const buffer: StringBuffer = new StringBuffer();
+            robloxObjectContainer.forEach((robloxUI) => {
+                buffer.writeLn(
+                    robloxUI.toCode(
+                        toCamelCase(robloxUI.name)
+                    )
+                );
+            });
+            codegenResults.push({
+                title: luaCodeTitle,
+                language: "PLAINTEXT",
+                code: buffer.toString(),
+            });
+            return codegenResults;
+    }
 }
 function checkValidRobloxType(defaultValue: string | boolean): any {
     throw new Error("Function not implemented.");

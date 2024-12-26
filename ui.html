@@ -133,30 +133,6 @@
       padding-top: 15px;      
     }
 
-    #download-button-div {
-      padding-top: 15px; 
-    }
-
-    #download-button {
-      align-self: center;
-      color: white;
-      fill: none;
-      text-decoration: none;
-      background: transparent;
-      border: 2px solid #ccc; 
-      border-radius: 20px;
-      padding-right: 10px;
-      padding-left: 10px;
-      padding-top: 5px;
-      padding-bottom: 5px;
-      text-align: center;
-      font-size: 13px;
-      justify-self: center;
-      align-content: center;
-      justify-content: center;
-      margin-left: 35px;
-    }
-
     #back-to-main-div {
       padding-top: 15px; 
     }
@@ -244,11 +220,6 @@
       <div id="progress-bar-div">
         <progress id='progress-bar' max="100" value="0"></progress>
       </div>
-      <div id="download-button-div">
-        <button id="download-button">
-          Download
-        </button>
-      </div>
       <div id="back-to-main-div">
         <button id="back-to-main-button">
           Back
@@ -267,7 +238,6 @@
     //
     const convertingProcess = document.getElementById('converting-process');
     const progressBar = document.getElementById('progress-bar');
-    const downloadButton = document.getElementById('download-button');
     const backToMainButton = document.getElementById('back-to-main-button');
     //
     document.addEventListener('keydown', (event) => {
@@ -329,21 +299,6 @@
         postMessage(
           {
             type: 'convert-to-object',
-          }, 
-          '*'
-        );
-      }
-    });
-    //
-    downloadButton.addEventListener('click', (event) => {
-      if (
-        (signUp.style.display === 'none') && 
-        (mainInterface.style.display === 'none') && 
-        (convertingProcess.style.display === 'flex')
-      ) {
-        postMessage(
-          {
-            type: 'download',
           }, 
           '*'
         );

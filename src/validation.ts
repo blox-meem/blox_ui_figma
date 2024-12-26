@@ -1,1 +1,1 @@
-export async function validate(password: string) {}
+export async function validate(password: string): Promise<void> {}

@@ -1,10 +1,55 @@
-import { assert } from "console";
-import { ConvertRunType } from "./convert";
-import { DownloadError } from "./errors";
-import { Camera, Frame, GuiObject, ImageButton, ImageLabel, Instance, LocalizationTable, RobloxClassName, RobloxUI, ScreenGui, ScrollingFrame, TextBox, TextButton, TextLabel, UIAspectRatioConstraint, UICorner, UIFlexItem, UIGradient, UIGridLayout, UIListLayout, UIPadding, UIPageLayout, UIScale, UISizeConstraint, UIStroke, UITableLayout, UITextSizeConstraint, VideoFrame, ViewportFrame } from "./lua";
+import { 
+    assert
+ } from "console";
+
+import { 
+    ConvertRunType 
+} from "./convert";
+
+import { 
+    DownloadError 
+} from "./errors";
+
+import { 
+    Camera, 
+    Frame, 
+    ImageButton, 
+    ImageLabel, 
+    Instance, 
+    LocalizationTable, 
+    RobloxUI, 
+    ScreenGui, 
+    ScrollingFrame, 
+    TextBox, 
+    TextButton, 
+    TextLabel, 
+    UIAspectRatioConstraint, 
+    UICorner, 
+    UIFlexItem, 
+    UIGradient, 
+    UIGridLayout, 
+    UIListLayout, 
+    UIPadding, 
+    UIPageLayout, 
+    UIScale, 
+    UISizeConstraint, 
+    UIStroke, 
+    UITableLayout, 
+    UITextSizeConstraint, 
+    VideoFrame, 
+    ViewportFrame 
+} from "./lua";
+
 import * as fs from "fs";
-import { dialog } from "electron";
-import { StringBuffer, toCamelCase } from "./structure";
+
+import { 
+    dialog 
+} from "electron";
+
+import { 
+    StringBuffer, 
+    toCamelCase 
+} from "./structure";
 
 class FileParser {
     private codeContentBuffer: StringBuffer = new StringBuffer();
@@ -115,10 +160,11 @@ export class RBMXMFile extends FileParser {
                             
                             <string name="Contents">[]</string>
                             <string name="Name">${localizationTableObject.name}</string>
+                            
                             <string name="SourceLocaleId">${localizationTableObject.sourceLocaleId}</string>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "Camera":
                 const cameraObject = guiObject as Camera;
                 return `
@@ -131,6 +177,7 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
                         
                             <string name="Name">${cameraObject.name}</string>
+                            
                             <Ref name="CameraSubject">${cameraObject.cameraSubject ?? "null"}</Ref>
                             <token>${cameraObject.cameraType}</token>
                             <float name="FieldOfView">${cameraObject.fieldOfView}</float>
@@ -141,7 +188,7 @@ export class RBMXMFile extends FileParser {
                             <bool name="VRTiltAndRollEnabled">${cameraObject.vrTiltAndRollEnabled}</bool>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "ScreenGui":
                 const screenGuiObject = guiObject as ScreenGui;
                 return `
@@ -152,6 +199,7 @@ export class RBMXMFile extends FileParser {
                             <bool name="DefinesCapabilities">false</bool>
                             <int64 name="SourceAssetId">-1</int64>
                             <BinaryString name="Tags"></BinaryString>
+                            
                             <string name="Name">${screenGuiObject.name}</string>
                         
                             <bool name="AutoLocalize">${screenGuiObject.autoLocalize}}{</bool>   
@@ -172,7 +220,7 @@ export class RBMXMFile extends FileParser {
                             <token name="ZIndexBehavior">${screenGuiObject.zIndexBehavior}</token>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             //
             case "UIAspectRatioConstraint":
                 const uiAspectRatioConstraint = guiObject as UIAspectRatioConstraint;
@@ -186,12 +234,13 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiAspectRatioConstraint.name}</string>
+                            
                             <float name="AspectRatio">${uiAspectRatioConstraint.aspectRatio}</float>
 			                <token name="AspectType">${uiAspectRatioConstraint.aspectType}</token>
                             <token name="DominantAxis">${uiAspectRatioConstraint.dominantAxis}</token>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UICorner":
                 const uiCornerObject = guiObject as UICorner;
                 return `
@@ -204,10 +253,11 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiCornerObject.name}</string>
+                            
                             ${uiCornerObject.cornerRadius.toRBXMXCode("CornerRadius")}
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UIFlexItem":
                 const uiFlexItemObject = guiObject as UIFlexItem;
                 return `
@@ -220,13 +270,14 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiFlexItemObject.name}</string>
+                            
                             <token name="FlexMode">${uiFlexItemObject.flexMode}</token>
                             <float name="GrowRatio">${uiFlexItemObject.growRatio}</float>
                             <token name="ItemLineAlignment">${uiFlexItemObject.itemLineAlignment}/token>
                             <float name="ShrinkRatio">${uiFlexItemObject.shrinkRatio}</float>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UIGradient":
                 const uiGradientObject = guiObject as UIGradient;
                 return `
@@ -239,13 +290,14 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiGradientObject.name}</string>
+                            
                             <bool name="Enabled">${uiGradientObject.enabled}</bool>
                             ${uiGradientObject.offset.toRBXMXCode("UIGradient")}
                             <float name="Rotation">${uiGradientObject.rotation}</float>
                             ${uiGradientObject.transparency.toRBXMXCode("Transparency")}
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UIGridLayout":
                 const uiGridLayoutObject = guiObject as UIGridLayout;
                 return `
@@ -258,6 +310,7 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiGridLayoutObject.name}</string>
+                            
                             ${uiGridLayoutObject.cellPadding.toRBXMXCode("CellPadding")}
                             ${uiGridLayoutObject.cellSize.toRBXMXCode("CellSize")}
                             <token name="FillDirection">${uiGridLayoutObject.fillDirection}>/token>
@@ -268,7 +321,7 @@ export class RBMXMFile extends FileParser {
                             <token name="VerticalAlignment">${uiGridLayoutObject.verticalAlignment}</token>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UIListLayout":
                 const uiListLayoutObject = guiObject as UIListLayout;
                 return `
@@ -281,6 +334,7 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiListLayoutObject.name}</string>
+                            
                             <token name="FillDirection">${uiListLayoutObject.fillDirection}</token>
                             <token name="HorizontalAlignment">${uiListLayoutObject.horizontalAlignment}</token>
                             <token name="HorizontalFlex">${uiListLayoutObject.horizontalFlex}</token>
@@ -292,7 +346,7 @@ export class RBMXMFile extends FileParser {
                             <bool name="Wraps">${uiListLayoutObject.wraps}</bool>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UIPadding":
                 const uiPaddingObject = guiObject as UIPadding;
                 return `
@@ -305,13 +359,14 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiPaddingObject.name}</string>
+                            
                             ${uiPaddingObject.paddingBottom.toRBXMXCode("PaddingBottom")}
                             ${uiPaddingObject.paddingLeft.toRBXMXCode("PaddingLeft")}
                             ${uiPaddingObject.paddingRight.toRBXMXCode("PaddingRight")}
                             ${uiPaddingObject.paddingTop.toRBXMXCode("PaddingTop")}
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UIPageLayout":
                 const uiPageLayoutObject = guiObject as UIPageLayout;
                 return `
@@ -324,6 +379,7 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiPageLayoutObject.name}</string>
+                            
                             <bool name="Animated">${uiPageLayoutObject.animated}</bool>
                             <bool name="Circular">${uiPageLayoutObject.circular}</bool>
                             <token name="EasingDirection">${uiPageLayoutObject.easingDirection}</token>
@@ -339,7 +395,7 @@ export class RBMXMFile extends FileParser {
                             <token name="VerticalAlignment">${uiPageLayoutObject.verticalAlignment}</token>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UIScale":
                 const uiScaleObject = guiObject as UIScale;
                 return `
@@ -352,10 +408,11 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiScaleObject.name}</string>
+                            
                             <float name="Scale">${uiScaleObject.scale}</float>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UISizeConstraint":
                 const uiSizeConstraintObject = guiObject as UISizeConstraint;
                 return `
@@ -368,11 +425,12 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiSizeConstraintObject.name}</string>
+                            
                             ${uiSizeConstraintObject.minSize.toRBXMXCode("MinSize")}
                             ${uiSizeConstraintObject.maxSize.toRBXMXCode("MaxSize")}
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UIStroke":
                 const uiStrokeObject = guiObject as UIStroke;
                 return `
@@ -385,6 +443,7 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiStrokeObject.name}</string>
+                            
                             <bool name="ApplyStrokeMode">${uiStrokeObject.applyStrokeMode}</bool>
                             ${uiStrokeObject.color.toRBXMXCode("Color")}
                             <bool name="Enabled">${uiStrokeObject.enabled}</bool>
@@ -393,7 +452,7 @@ export class RBMXMFile extends FileParser {
 			                <float name="Transparency">${uiStrokeObject.transparency}</float>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UITableLayout":
                 const uiTableLayoutObject = guiObject as UITableLayout;
                 return `
@@ -406,6 +465,7 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiTableLayoutObject.name}</string>
+                            
                             <token name="FillDirection">${uiTableLayoutObject.fillDirection}</token>
                             <bool name="FillEmptySpaceColumns">${uiTableLayoutObject.fillEmptySpaceColumns}</bool>
                             <bool name="FillEmptySpaceRows">${uiTableLayoutObject.fillEmptySpaceRows}</bool>
@@ -415,7 +475,7 @@ export class RBMXMFile extends FileParser {
                             <token name="VerticalAlignment">${uiTableLayoutObject.verticalAlignment}</token>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "UITextSizeConstraint":
                 const uiTextSizeConstraintObject = guiObject as UITextSizeConstraint;
                 return `
@@ -428,11 +488,12 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${uiTextSizeConstraintObject.name}</string>
+                            
                             <int name="MaxTextSize">${uiTextSizeConstraintObject.maxTextSize}</int>
 			                <int name="MinTextSize">${uiTextSizeConstraintObject.minTextSize}</int>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             //    
             case "Frame":
                 const frameObject = guiObject as Frame;
@@ -446,6 +507,7 @@ export class RBMXMFile extends FileParser {
                             <BinaryString name="Tags"></BinaryString>
 
                             <string name="Name">${frameObject.name}</string>
+                            
                             <bool name="Active">${frameObject.active}</bool>
                             ${frameObject.anchorPoint.toRBXMXCode("AnchorPoint")}
                             <bool name="AutoLocalize">${frameObject.autoLocalize}</bool>
@@ -481,7 +543,7 @@ export class RBMXMFile extends FileParser {
 			                <int name="ZIndex">${frameObject.zIndex}</int>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "ScrollingFrame":
                 const scrollingFrameObject = guiObject as ScrollingFrame;
                 return `
@@ -544,7 +606,7 @@ export class RBMXMFile extends FileParser {
 			                <token name="VerticalScrollBarPosition">${scrollingFrameObject.verticalScrollBarPosition}</token>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "VideoFrame":
                 const videoFrameObject = guiObject as VideoFrame;
                 return `
@@ -598,7 +660,7 @@ export class RBMXMFile extends FileParser {
                             <float name="Volume">${videoFrameObject.volume}</float>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "ViewportFrame":
                 const viewportFrameObject = guiObject as ViewportFrame;
                 return `
@@ -669,7 +731,7 @@ export class RBMXMFile extends FileParser {
                             <float name="LightDirection">${viewportFrameObject.lightDirection}</float>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "ImageLabel":
                 const imageLabelObject = guiObject as ImageLabel;
                 return `
@@ -728,7 +790,7 @@ export class RBMXMFile extends FileParser {
                             ${imageLabelObject.tileSize.toRBXMXCode("TileSize")}
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "ImageButton":
                 const imageButtonObject = guiObject as ImageButton;
                 return `
@@ -795,7 +857,7 @@ export class RBMXMFile extends FileParser {
                             <Content name="PressedImage">${imageButtonObject.pressedImage?.padStart(5, "<url>").padEnd(6, "</url>") ?? "<null></null>"}</Content>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "TextLabel":
                 const textLabelObject = guiObject as TextLabel;
                 return `
@@ -864,7 +926,7 @@ export class RBMXMFile extends FileParser {
 
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "TextButton":
                 const textButtonObject = guiObject as TextButton;
                 return `
@@ -937,7 +999,7 @@ export class RBMXMFile extends FileParser {
                             <token name="Style">${textButtonObject.style}</token>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
             case "TextBox":
                 const textBoxObject = guiObject as TextBox;
                 return `
@@ -1012,7 +1074,7 @@ export class RBMXMFile extends FileParser {
                             <bool name="TextEditable">${textBoxObject.textEditable}</bool>
                         </Properties>
                     </Item>
-                `;
+                `.trim();
         }
     }
 }

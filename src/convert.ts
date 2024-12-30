@@ -3,9 +3,6 @@ import {
 } from "console";
 
 import { 
-    bloxUITitle, 
-    codeGenerationLanguage, 
-    dartTitle, 
     luaCodeTitle 
 } from "./constants";
 
@@ -52,8 +49,6 @@ import {
 import { 
     processNestedNodes, 
     SelectedComponentMap, 
-    SelectedNodeMap, 
-    selectedNodes, 
     StringBuffer,
     toCamelCase
 } from "./structure";
@@ -70,8 +65,10 @@ import {
     ExternalVideoFrameProperties, 
     ExternalViewportFrameProperties 
 } from "./input";
-import { exportFile } from "./download";
 
+import { 
+    exportFile 
+} from "./download";
 
 export enum BloxF2RLanguages {
     lua,
@@ -2293,21 +2290,28 @@ export function convertFigmaObjectToRobloxObject(figmaObject: FigmaObjects, exte
     }
 }
 
-export function convertToCode(page: PageNode): void {
-    const selection = page.selection;
-}
-
-function generateCode(selection: readonly SceneNode[], language: BloxF2RLanguages): string {
-    return '';
-}
-
 export enum ConvertRunType {
     convertToCode,
     convertToObject,
     generateCode,
 }
 
-export default async function main(type: ConvertRunType, externalProperties: Map<string, ExternalRobloxProperties>): Promise<CodegenResult[] | void> {
+function checkValidRobloxType(defaultValue: string | boolean): boolean {
+    if (typeof defaultValue === "boolean") {
+        return false
+    } else if (
+        (typeof defaultValue === "string") && (
+        defaultValue === "VIEWPORTFRAME" ||
+        defaultValue === "IMAGEBUTTON" ||
+        defaultValue === "TEXTBUTTON" ||
+        defaultValue === "TEXTBOX"
+    )) {
+        return true;
+    }
+    return false;
+}
+
+export async function main(type: ConvertRunType, externalProperties: Map<string, ExternalRobloxProperties>): Promise<CodegenResult[] | void> {
     const robloxObjectContainer: RobloxUI[] = [];
     processNestedNodes(async (nodeMap) => {
         if (nodeMap.type === 'FRAME') {
@@ -2407,7 +2411,3 @@ export default async function main(type: ConvertRunType, externalProperties: Map
             return codegenResults;
     }
 }
-function checkValidRobloxType(defaultValue: string | boolean): any {
-    throw new Error("Function not implemented.");
-}
-

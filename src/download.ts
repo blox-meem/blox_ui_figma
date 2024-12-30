@@ -80,18 +80,8 @@ class FileParser {
     }
 
     async save(): Promise<void> {
-        const result = await dialog.showSaveDialog({
-            title: "Save File",
-            defaultPath: this.fileName,
-            filters: [{
-                name: "Lua Files",
-                extensions: ["lua"],
-            }],
-        });
-        if (!result.canceled && result.filePath) {
-            fs.writeFileSync(result.filePath, this.content, "utf8");
-            figma.notify("File saved!");
-        }
+        const storage = figma.clientStorage;
+        await storage.setAsync(this.fileName, this.content);
     }
 }
 

@@ -1,13 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
 
   <title>Blox F2R</title>
-  
+
   <style>
+    * {
+      box_sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    /* Body */
+
     body {
       display: flex;
       justify-content: center;
@@ -18,42 +32,37 @@
       font-family: 'Inter', sans-serif;
       font-weight: bold;
       flex-direction: column;
-    }
-
-    #sign-up {
-      display: flex;
-    }
-
-    #header {
-      text-align: center; 
-      margin-top: 30px;
+      width: 100%;
+      min-height: 100vh;
+      text-align: center;
       color: rgb(255, 255, 255);
+    }
+
+    /* Signup */
+
+    .column {
+      display: grid;
+      grid-template-columns: auto;
+      flex-direction: column;
+      gap: 15px;
     }
 
     #password-input-validation-notice {
-      color: rgb(255, 255, 255);
       font-size: 15px;
-      text-align: center;
-      padding-bottom: 20px; 
     }
 
     #password-input {
       fill: none;
       text-decoration: none;
       background: transparent;
-      border: 2px solid #ccc; 
-      border-radius: 20px; 
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
+      border: 2px solid #ccc;
+      border-radius: 20px;
       padding-top: 10px;
       padding-bottom: 10px;
       padding-left: 10px;
       padding-right: 10px;
-      color: #ccc;
-      font-family: 'Inter', sans-serif;
-      font-weight: bold;
       outline: none;
+      color: white;
     }
 
     #password-input::placeholder {
@@ -62,25 +71,46 @@
       font-weight: bold;
     }
 
-    #progress-text {
-      display: none;
-      padding-top: 20px;
-      color: #ccc;
-      font-weight: bold;
+    .invalid,
+    .neutral,
+    .valid {
+      font-size: 15px;
+      padding-top: 5px;
+    }
+
+    .invalid {
+      color: #ff0000;
+    }
+
+    .neutral {
+      color: white;
+    }
+
+    .valid {
+      color: greenyellow;
+    }
+
+    #invalid-password {
       font-size: 12px;
     }
 
+    #password-validator {
+      display: none;
+    }
+
+    /* Main */
+
     #main-interface {
       display: none;
-    } 
-  
+    }
+
     #main-header {
-      color: white; 
+      color: white;
       font-size: 25px;
-      padding-top: 20px; 
+      padding-top: 20px;
       text-align: center;
     }
-  
+
     #main-selected-item {
       color: white;
       padding-top: 15px;
@@ -93,7 +123,7 @@
       color: white;
       font-size: 13px;
       padding-top: 15px;
-    } 
+    }
 
     #main-convert-buttons {
       padding-top: 15px;
@@ -108,7 +138,7 @@
       fill: none;
       text-decoration: none;
       background: transparent;
-      border: 2px solid #ccc; 
+      border: 2px solid #ccc;
       border-radius: 20px;
       padding-right: 10px;
       padding-left: 10px;
@@ -117,11 +147,13 @@
       margin: 5px;
     }
 
+    /* Convert */
+
     #converting-process {
       display: none;
       justify-content: center;
     }
- 
+
     #progress-title {
       padding-top: 30px;
       color: white;
@@ -130,11 +162,11 @@
     }
 
     #progress-bar-div {
-      padding-top: 15px;      
+      padding-top: 15px;
     }
 
     #back-to-main-div {
-      padding-top: 15px; 
+      padding-top: 15px;
     }
 
     #back-to-main-button {
@@ -143,7 +175,7 @@
       fill: none;
       text-decoration: none;
       background: transparent;
-      border: 2px solid #ccc; 
+      border: 2px solid #ccc;
       border-radius: 20px;
       padding-right: 10px;
       padding-left: 10px;
@@ -159,168 +191,162 @@
   </style>
 
 </head>
-  <body>
-    <div id="sign-up">
-      <div id="column">
 
-        <!-- Header -->
-        <div id="header">
-          <h2 id="title">Blox F2R</h2>
-        </div>
-        
-        <!-- Password Input Validation Notice -->
-        <div id="password-input-validation-notice">
-          <div>Enter your provided password...</div>
-        </div>
+<body>
+  <div id="sign-up">
+    <div class="column">
 
-        <!-- Password Input Validation -->
-        <div>
-          <input
-            id="password-input" 
-            type="password"
-            placeholder="Enter password..."
-            font-family: 'Inter', sans-serif;
-            font-weight: bold;
-          >
-        </div>
+      <!-- Header -->
+      <div id="header">
+        <h2 id="title">Blox F2R</h2>
       </div>
 
-      <!-- Progress Text -->
+      <!-- Password Input Validation Notice -->
+      <div id="password-input-validation-notice">
+        <div>Enter your provided password...</div>
+      </div>
+
+      <!-- Password Input Validation -->
       <div>
-        <div id="progress-text">
-          Loading...
-        </div>
+        <input id="password-input" type="password" placeholder="Enter password..." font-family: 'Inter' , sans-serif;
+          font-weight: bold;>
       </div>
-    </div>
 
-    <div id="main-interface">
-      <div id="main-header">
-        BloxF2R
-      </div>
-      <div id="main-selected-item">
-        Selected item:
-      </div>
-      <div id="main-convert-to">
-        Convert to...
-      </div>
-      <div id="main-convert-buttons">
-        <button id="main-convert-to-code-button">
-          Code
-        </button>
-        <button id="main-convert-to-object-button">
-          Object
-        </button>
-      </div>
-    </div>
+      <!-- Password Validator -->
 
-    <div id="converting-process">
-      <div id="progress-title">
-        Converting into...
-      </div>
-      <div id="progress-bar-div">
-        <progress id='progress-bar' max="100" value="0"></progress>
-      </div>
-      <div id="back-to-main-div">
-        <button id="back-to-main-button">
-          Back
-        </button>
+      <div id="password-validator" class="column">
+        <ul>
+          <li id="invalid-password" class="invalid">
+            Password not linked to a user
+          </li>
+          <li id="progress-text" class="neutral">
+            Loading...
+          </li>
+        </ul>
       </div>
     </div>
-  </body>
-  <script>
-    const signUp = document.getElementById('sign-up');
-    const apiInput = document.getElementById('password-input');
-    const progressText = document.getElementById('progress-text');
-    //
-    const mainInterface = document.getElementById('main-interface');
-    const convertIntoCode = document.getElementById('main-convert-to-code-button');
-    const convertIntoObject = document.getElementById('main-convert-to-object-button');
-    //
-    const convertingProcess = document.getElementById('converting-process');
-    const progressBar = document.getElementById('progress-bar');
-    const backToMainButton = document.getElementById('back-to-main-button');
-    //
-    document.addEventListener('keydown', (event) => {
-      switch (event.key) {
-        case "Enter":
-          if (
-            (signUp.style.display === 'flex') && 
-            (mainInterface.style.display === 'none') && 
-            (convertingProcess.style.display === 'none')
-          ) {
-            progressText.style.display = 'flex';
-            parent.postMessage(
-              {
-              type: 'check-password', 
-              value: apiInput.value
-              }, 
-              "*"
-            );
-          }
-          break;
-        default:
-          progressText.style.display = 'none';
-          postMessage(
-            {
-              type: 'unhandled-key'
-            }, 
-            "*"
-          );
-      }
-    });
-    //
-    convertIntoCode.addEventListener('click', (event) => {
-      if (
-        (signUp.style.display === 'flex') && 
-        (mainInterface.style.display === 'none') && 
-        (convertingProcess.style.display === 'none')
-      ) {
-        signUp.style.display = 'none';
-        mainInterface.style.display = 'none';
-        convertingProcess.style.display = 'flexd';
-        postMessage(
+  </div>
+
+  <div id="main-interface">
+    <div id="main-header">
+      BloxF2R
+    </div>
+    <div id="main-selected-item">
+      Selected item:
+    </div>
+    <div id="main-convert-to">
+      Convert to...
+    </div>
+    <div id="main-convert-buttons">
+      <button id="main-convert-to-code-button">
+        Code
+      </button>
+      <button id="main-convert-to-object-button">
+        Object
+      </button>
+    </div>
+  </div>
+
+  <div id="converting-process">
+    <div id="progress-title">
+      Converting into...
+    </div>
+    <div id="progress-bar-div">
+      <progress id='progress-bar' max="100" value="0"></progress>
+    </div>
+    <div id="back-to-main-div">
+      <button id="back-to-main-button">
+        Back
+      </button>
+    </div>
+  </div>
+</body>
+<script type="module">
+  const signUp = document.getElementById('sign-up');
+  const apiInput = document.getElementById('password-input');
+  const progressText = document.getElementById('progress-text');
+  //
+  const mainInterface = document.getElementById('main-interface');
+  const convertIntoCode = document.getElementById('main-convert-to-code-button');
+  const convertIntoObject = document.getElementById('main-convert-to-object-button');
+  //
+  const convertingProcess = document.getElementById('converting-process');
+  const progressBar = document.getElementById('progress-bar');
+  const backToMainButton = document.getElementById('back-to-main-button');
+  //
+  apiInput.addEventListener('keydown', (event) => {
+    switch (event.key) {
+      case "Enter":
+        if (signUp.style.display !== "none") {
+          parent.postMessage({
+            pluginMessage: 'check-password',
+            value: apiInput.value,
+          }, "*");
+        }
+        break;
+      default:
+        progressText.style.display = 'none';
+        parent.postMessage(
           {
-            type: 'convert-to-code',
-          }, 
-          '*'
+            type: 'unhandled-key'
+          },
+          "*"
         );
-      }
-    });
-    //
-    convertIntoObject.addEventListener('click', (event) => {
-      if (
-        (signUp.style.display === 'flex') && 
-        (mainInterface.style.display === 'none') && 
-        (convertingProcess.style.display === 'none')
-      ) {
-        signUp.style.display = 'none';
-        mainInterface.style.display = 'none';
-        convertingProcess.style.display = 'flex';
-        postMessage(
-          {
-            type: 'convert-to-object',
-          }, 
-          '*'
-        );
-      }
-    });
-    //
-    backToMainButton.addEventListener('click', (event) => {
-      if (
-        (signUp.style.display === 'none') && 
-        (mainInterface.style.display === 'none') && 
-        (convertingProcess.style.display === 'flex')
-      ) {
-        signUp.style.display = 'none';
-        mainInterface.style.display = 'flex';
-        convertingProcess.style.display = 'none';
-        postMessage(
-          {
-            type: 'back-to-main',
-          }, 
-          '*'
-        );
-      }
-    });
-  </script>
+    }
+  });
+  //
+  convertIntoCode.addEventListener('click', (event) => {
+    if (
+      (mainInterface.style.display === 'none') &&
+      (convertingProcess.style.display === 'none')
+    ) {
+      signUp.style.display = 'none';
+      mainInterface.style.display = 'none';
+      convertingProcess.style.display = 'flex';
+      postMessage(
+        {
+          type: 'convert-to-code',
+        },
+        '*'
+      );
+    }
+  });
+  //
+  convertIntoObject.addEventListener('click', (event) => {
+    if (
+      (signUp.style.display === 'flex') &&
+      (mainInterface.style.display === 'none') &&
+      (convertingProcess.style.display === 'none')
+    ) {
+      signUp.style.display = 'none';
+      mainInterface.style.display = 'none';
+      convertingProcess.style.display = 'flex';
+      postMessage(
+        {
+          type: 'convert-to-object',
+        },
+        '*'
+      );
+    }
+  });
+  //
+  backToMainButton.addEventListener('click', (event) => {
+    if (
+      (signUp.style.display === 'none') &&
+      (mainInterface.style.display === 'none') &&
+      (convertingProcess.style.display === 'flex')
+    ) {
+      signUp.style.display = 'none';
+      mainInterface.style.display = 'flex';
+      convertingProcess.style.display = 'none';
+      postMessage(
+        {
+          type: 'back-to-main',
+        },
+        '*'
+      );
+    }
+  });
+</script>
+
 </html>

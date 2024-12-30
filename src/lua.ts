@@ -3,8 +3,16 @@ import {
 } from "console";
 
 import tinycolor from 'tinycolor2';
-import { StringBuffer, toCamelCase } from "./structure";
-import { RBMXMFile, toRBXMX } from "./download";
+
+import { 
+    StringBuffer, 
+    toCamelCase 
+} from "./structure";
+
+import { 
+    RBMXMFile, 
+    toRBXMX 
+} from "./download";
 
 abstract class RobloxObject {}
 

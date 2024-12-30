@@ -1,12 +1,7 @@
-import main, { 
-  BloxF2RLanguages, 
+import  {
+  main, 
   ConvertRunType, 
-  convertToCode, 
 } from './convert';
-
-import { 
-  exportFile 
-} from './download';
 
 import { 
   validate 
@@ -14,32 +9,37 @@ import {
 
 import { 
   CodeConvertionError, 
-  DownloadError, 
   NavigationError, 
   ObjectConvertionError, 
   UnhandledKeyError, 
   ValidationError 
 } from './errors';
-import { ExternalRobloxProperties } from './input';
+
+import { 
+  ExternalRobloxProperties 
+} from './input';
 
 figma.showUI(__html__, {
-  width: 700,
-  height: 500,
+  width: 500,
+  height: 350,
   visible: true,
 });
 
-figma.ui.onmessage =  async (msg: {type: string, value?: string}) => {
-  const currentPage = figma.currentPage;
-  if (msg.type === 'check-password') {
+figma.ui.onmessage =  async (msg: {pluginMessage: string, value?: string}) => {
+  console.log(1);
+  console.log(msg);
+  if (msg.pluginMessage === 'check-password') {
+    console.log(1);
     try {
+      console.log(1);
       validate(msg.value!);
     } catch (error) {
       if (error instanceof ValidationError) {}
     } finally {
-      
+      console.log(1);
     }
   }
-  if (msg.type === 'convert-to-code') {
+  if (msg.pluginMessage === 'convert-to-code') {
     try {
       await main(
         ConvertRunType.convertToCode, 
@@ -51,7 +51,7 @@ figma.ui.onmessage =  async (msg: {type: string, value?: string}) => {
       figma.closePlugin();
     }
   }
-  if (msg.type === 'convert-to-object') {
+  if (msg.pluginMessage === 'convert-to-object') {
     try {
       await main(
         ConvertRunType.convertToObject,
@@ -63,7 +63,7 @@ figma.ui.onmessage =  async (msg: {type: string, value?: string}) => {
       figma.closePlugin();
     }
   }
-  if (msg.type === 'back-to-main') {
+  if (msg.pluginMessage === 'back-to-main') {
     try {
 
     } catch (error) {
@@ -72,7 +72,7 @@ figma.ui.onmessage =  async (msg: {type: string, value?: string}) => {
 
     }
   }
-  if (msg.type === 'unhandled-key') {
+  if (msg.pluginMessage === 'unhandled-key') {
     try {
 
     } catch (error) {

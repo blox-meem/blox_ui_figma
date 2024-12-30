@@ -1,0 +1,47 @@
+#main-interface {
+    display: none;
+  } 
+
+  #main-header {
+    color: white; 
+    font-size: 25px;
+    padding-top: 20px; 
+    text-align: center;
+  }
+
+  #main-selected-item {
+    color: white;
+    padding-top: 15px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  #main-convert-to {
+    text-align: center;
+    color: white;
+    font-size: 13px;
+    padding-top: 15px;
+  } 
+
+  #main-convert-buttons {
+    padding-top: 15px;
+    justify-content: space-between;
+  }
+
+  #main-convert-to-code-button #main-convert-to-object-button {
+    align-items: center;
+    align-content: center;
+    align-self: center;
+    color: white;
+    fill: none;
+    text-decoration: none;
+    background: transparent;
+    border: 2px solid #ccc; 
+    border-radius: 20px;
+    padding-right: 10px;
+    padding-left: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin: 5px;
+  }
+  

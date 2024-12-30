@@ -1,0 +1,41 @@
+
+#converting-process {
+    display: none;
+    justify-content: center;
+  }
+
+  #progress-title {
+    padding-top: 30px;
+    color: white;
+    text-align: center;
+    font-size: 13px;
+  }
+
+  #progress-bar-div {
+    padding-top: 15px;      
+  }
+
+  #back-to-main-div {
+    padding-top: 15px; 
+  }
+
+  #back-to-main-button {
+    align-self: center;
+    color: white;
+    fill: none;
+    text-decoration: none;
+    background: transparent;
+    border: 2px solid #ccc; 
+    border-radius: 20px;
+    padding-right: 10px;
+    padding-left: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    text-align: center;
+    font-size: 13px;
+    justify-self: center;
+    align-content: center;
+    justify-content: center;
+    margin-left: 47.5px;
+  }
+  

@@ -1,0 +1,50 @@
+
+#sign-up {
+    display: flex;
+  }
+
+  #header {
+    text-align: center; 
+    margin-top: 30px;
+    color: rgb(255, 255, 255);
+  }
+
+  #password-input-validation-notice {
+    color: rgb(255, 255, 255);
+    font-size: 15px;
+    text-align: center;
+    padding-bottom: 20px; 
+  }
+
+  #password-input {
+    fill: none;
+    text-decoration: none;
+    background: transparent;
+    border: 2px solid #ccc; 
+    border-radius: 20px; 
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    color: #ccc;
+    font-family: 'Inter', sans-serif;
+    font-weight: bold;
+    outline: none;
+  }
+
+  #password-input::placeholder {
+    color: #ccc;
+    font-family: 'Inter', sans-serif;
+    font-weight: bold;
+  }
+
+  #progress-text {
+    display: none;
+    padding-top: 20px;
+    color: #ccc;
+    font-weight: bold;
+    font-size: 12px;
+}

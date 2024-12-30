@@ -1,5 +1,9 @@
-import { resolve as _resolve } from 'path';
+import { resolve } from 'path';
+import { fileURLToPath } from 'url';
 import webpack from 'webpack';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = resolve(__filename, '..');
 
 export default (_, argv) => ({
 mode: argv.mode === 'production' ? 'production' : 'development',
@@ -9,6 +13,7 @@ devtool: argv.mode === 'production' ? false : 'inline-source-map',
     code: './src/code.ts'
   },
   module: {
+    noParse: /\/node_modules\/process\//,
     rules: [
       {
         test: /\.tsx?$/,
@@ -19,9 +24,18 @@ devtool: argv.mode === 'production' ? false : 'inline-source-map',
   },
   resolve: {
     extensions: ['.ts', '.js'],
+    fallback: {
+      fs: false
+    }
   },
   output: {
     filename: '[name].js',
-    path: _resolve(__dirname, 'dist'),
+    path: resolve(__dirname, 'dist'),
   },
+  target: 'web',
+  plugins: [
+    new webpack.ProvidePlugin({
+      process: 'process/browser.js',
+    }),
+  ]
 });

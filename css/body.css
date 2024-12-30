@@ -1,0 +1,11 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    background-color: rgba(0, 14, 85, 1);
+    user-select: none;
+    font-family: 'Inter', sans-serif;
+    font-weight: bold;
+    flex-direction: column; 
+}
